@@ -1,15 +1,14 @@
 return {
 
-
     -- ============================================================
-    -- Behavior Flags
+    -- New Behavior Mode Flags
     -- ============================================================
 
     -- Nominal Leyak Cooldown (Seconds), Base Game Default is 900
     leyak_cooldown = 900,
 
     -- Randomizes choice between new Leyak behavior modes
-    -- Setting this true will override the following:
+    -- Setting this true will randomly override the following:
     --  1. leyak_is_dismissed_by_looking
     --  2. leyak_is_restricted_by_looking
     --  3. leyak_is_dismissed_by_sensory_companion_trinket
