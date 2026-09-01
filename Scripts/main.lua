@@ -541,6 +541,15 @@ local function Handle_OnMegalightHit(context, megalight, Tier)
         -- Hit By XRAY Tower
         leyak_was_xrayed_by_tower = true
         leyak_was_dismissed = true
+        leyak_xray_struck_counter = ConfigLeyak.leyak_xray_dismissal_time + 1
+        SetLeyakMoveSpeed(0.01, 0.01, 0.01)
+        Leyak_NPC.RequiredMegalightDuration = 2
+        Leyak_NPC.HasBeenXrayed = true
+        -- Force Despawn and Handle Drop now, otherwise
+        -- normal X-RAY logic will always drop essence
+        Leyak_NPC.PrepareLeyakDespawn()
+        leyak_drop_essence(Leyak_NPC)
+        leyak_xray_hold_counter = ConfigLeyak.leyak_is_restricted_by_xray_duration
     else -- Item_LightSource_Megalight_C_2147408010.MegalightComponent
         leyak_was_xrayed_by_tower = false
         leyak_was_xrayed_by_lamp = true
