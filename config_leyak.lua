@@ -28,8 +28,10 @@ return {
     -- Additionally, freeze/slow the Leyak in place for [leyak_is_restricted_by_xray_duration]
     leyak_is_restricted_by_xray = true,
 
-    -- Duration the XRAY slows or holds the Leyak in place
-    leyak_is_restricted_by_xray_duration = 150,
+    -- Duration the XRAY slows or holds the Leyak in place.
+    -- Allows players to reach [DistanceDifferenceToDespawn] escape distance,
+    -- especially when [leyak_xray_dismissal_time] is set high
+    leyak_is_restricted_by_xray_duration = 200,
 
     -- TODO: Not Yet Implemented
     leyak_can_be_invisible = true,
@@ -38,7 +40,9 @@ return {
     -- Controls how long the Leyak needs to be hit by a hand-held XRAY lamp to disappear
     -- [leyak_xray_dismissal_time_max] will be overwritten with a random value between 
     -- the min/max range. Default: 3. 
-    -- Set the mix/max range to very high to disable XRAY dismissal (i.e 10000)
+    -- Set the mix/max range to very high to disable XRAY dismissal (i.e 10000) and
+    -- encourage players to run away or juggle stunning the leyak while dealing with other 
+    -- combatants in the area.
     -- If disabling, be sure to set the [leyak_xray_essense_time] below to a reasonable
     -- value to allow players to collect Leyak Essence 
     leyak_xray_dismissal_time_max = 10000,
@@ -55,7 +59,14 @@ return {
     leyak_xray_essense_time = 100,
 
     -- Distance the player must run to escape the Leyak
-    DistanceDifferenceToDespawn = 10000.0,
+    -- If the leyak despawns/is-stuck for any reason then 
+    -- a new encounter will immediately be spawned to continue hunting.
+    -- Current Valid Escape Conditions are:
+    -- 1. Player is more than DistanceDifferenceToDespawn meters from leyak [leyak_evaded_by_player]
+    -- 2. leyak_was_dismissed [HasBeenXrayed == true]
+    -- 3. leyak entered combat state for grab attack [leyak_caught_player == true]
+    -- 4. Any despawn during default behavior mode [leyak_is_dismissed_by_looking == true]
+    DistanceDifferenceToDespawn = 8000.0,
 
     -- Leyak will be dismissed by the sensory companion trinket,
     -- i.e behave functionally equivalent being hit by a hand-held XRAY lamp
@@ -105,7 +116,7 @@ return {
     -- Debug Settings
     -- ============================================================
     admin_messages_enabled = true,
-    log_distance_to_player = true,
+    log_distance_to_player = false,
 
 
 }

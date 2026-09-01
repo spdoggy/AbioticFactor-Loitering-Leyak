@@ -50,4 +50,7 @@ Features implemented so far:
 
 1. Leyak no-clip mode
 2. Leyak invisible until XRAY'd
+3. Teleport to player if lost
+4. Target Switch during active hunt
+5. Option to limit/prevent essence drop clutter
 

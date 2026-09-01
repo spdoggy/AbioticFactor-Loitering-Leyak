@@ -1,10 +1,6 @@
 local Utils = require("utils")
 
 
--- git submodule add https://github.com/igromanru/AFUtils-UE4SS.git ./AFUtils
--- git submodule add https://github.com/igromanru/BaseUtils-UE4SS.git ./AFUtils/BaseUtils
--- git submodule update --init
-
 -- TODO:
 -- 1. Leyak Mods
 --    a. Look into an additional mode where Leyak is invisible until XRAY'd
@@ -52,7 +48,6 @@ local GameStateHookFired = false
 local GameStateHookNotified = false
 local leyak_xray_hold_counter = 0
 local leyak_xray_struck_counter = 0
-local leyak_status_print = 0
 local leyak_was_xrayed = false
 local leyak_was_xrayed_by_tower = false
 local leyak_dropped_essence = false
@@ -70,91 +65,6 @@ local Leyak_DIR = nil -- @ULeyakDirectorComponent_C;
 -- ============================================================
 -- UTILITIES
 -- ============================================================
-
-
--- TODO: Invisibility
--- ---@param actor class AActor*
--- function IsActorValid(actor)
---     if IsNotValid(actor) then return false end
-
---     local ok, npcData = pcall(function() return actor.NPCData end)
---     if not ok then return false end
-
---     -- Discard non-level loaded actors
---     if IsValid(npcData) then
---         local ok, levelLoaded = pcall(function()
---             return actor:IsLevelLoaded(false)
---         end)
---         if not ok or not levelLoaded then return false end
---     end
-
---     return true
--- end
-
--- function IsActorInvalid(actor)
---     return not IsActorValid(actor)
--- end
-
--- -- Capture -> re-resolve: the GC-safe way to carry a UObject across an async hop (EIGT / delayed work).
--- --   * A captured WRAPPER can be freed + slot-reused before the callback runs, and IsValid LIES then
--- --     (the GC family; pcall can't catch the resulting native AV - the Crash2-SpawnStressTest stack).
--- --   * So: take the object's PATH while it's alive, then StaticFindObject it at use-time - a freed
--- --     object resolves to nil, never a stale pointer (same defense as ASSETS.GetIfValid).
--- function ObjectPath(obj)
---     if IsNotValid(obj) then return nil end
---     local full
---     pcall(function() full = obj:GetFullName() end)
---     if not full then return nil end
---     return full:match("^%S+ (.+)$") or full -- strip the "ClassName " prefix
--- end
-
--- function ResolveByPath(path)
---     if not path then return nil end
---     local obj
---     pcall(function() obj = StaticFindObject(path) end)
---     if obj and obj:IsValid() then return obj end
---     return nil
--- end
-
--- function GetValidMesh(actor)
---     if IsActorInvalid(actor) then return nil end
-
---     -- pcall'd for the same reason as IsActorValid's NPCData read: this polls captured
---     -- wrappers (the ACTOR_READY WaitFor) and the read must not be the stale-wrapper deref.
---     local okM, mesh = pcall(function() return actor.Mesh end)
---     if not okM or IsNotValid(mesh) then return nil end
---     local ok, world = pcall(function() return mesh:GetWorld() end)
---     if not ok or not world then return nil end
-
---     return mesh
--- end
-
--- -- [RENDERER] Fade the whole body via the character master's "Opacity" scalar (1 solid, 0 gone).
--- -- If a fade doesn't show, the material's blend mode doesn't honour Opacity - not this code.
-
--- function SetMeshOpacity(actor, opacity)
---     local mesh = GetValidMesh(actor)
---     if not mesh then return end
---     pcall(function() mesh:SetScalarParameterValueOnMaterials(FName("Opacity"), opacity) end)
--- end
-
--- -- Step opacity across `steps` (a list of values), one every `stepMs` (default 500) - e.g.
--- -- { 0.8, 0.6, 0.4, 0.2, 0 } fades out over 2.5s. Each step re-checks validity, so it is safe to
--- -- kick off and let the actor die mid-fade.
-
--- function FadeMeshOpacity(actor, steps, stepMs)
---     if IsActorInvalid(actor) or not steps then return end
---     stepMs = stepMs or 500
---     for i, o in ipairs(steps) do
---         -- Utils.QueueWork(function()
---         --     if IsActorValid(actor) then SetMeshOpacity(actor, o) end
---         -- end, (i - 1) * stepMs)
-
---         ExecuteWithDelay(1000, function()
---             if IsActorValid(actor) then SetMeshOpacity(actor, o) end
---         end)
---     end
--- end
 
 -- Return true if a player has a matching named Buff
 ---@param player AAbiotic_PlayerCharacter_C
@@ -191,10 +101,6 @@ end
 -- FUNCTIONS
 -- ============================================================
 
-
-
-
-
 -- Server Side Supported
 local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
     Utils.log(">>>> Handle_Request_SendTextChatMessage Fired! <<< ")
@@ -211,12 +117,6 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
             max_key = k
         end
     end
-
-
-
-    player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, "---", Enums.MsgColors.green,
-        player_controller, false)
-
 
     -- Get/Set Leyak Cooldown
     if (msg_fmt[1] == "SetLeyakCooldown" or msg_fmt[1] == "slc" or msg_fmt[1] == "glc") and max_key == 1 then
@@ -301,9 +201,6 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
                 -- TBD, No Player Supported Commands at this time
             end)
         end
-
-        player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, "---", Enums.MsgColors.green,
-            player_controller, false)
     end
 end
 
@@ -315,13 +212,13 @@ local function SetLeyakMoveSpeed(walk, sprint, time_dilation)
 
     local leyak_director = GetValidLeyakDir()
     if Utils.IsValid(leyak_director) then
-        --ExecuteInGameThread(function()
-        Utils.log("Setting Leyak MoveFactor: " .. time_dilation)
+        if ConfigLeyak.log_distance_to_player then
+            Utils.log("Setting Leyak MoveFactor: " .. time_dilation)
+        end
         local npc = leyak_director.ActiveStalkingNPC.NPCData
         npc.DefaultWalkSpeed_17_311EDFE249A63474E18512B1E0BA66D4 = walk
         npc.DefaultSprintSpeed_18_F44E4C8A4F87079E4A5710984C1DF4EC = sprint
         leyak_director.ActiveStalkingNPC.CustomTimeDilation = time_dilation
-        --end)
     end
 end
 
@@ -444,11 +341,6 @@ local function Handle_TriggerViewedByTarget()
         return
     end
 
-    -- TODO
-    -- if ConfigLeyak.leyak_can_be_invisible then
-    --     FadeMeshOpacity(actor, 0.1, stepMs)
-    -- end
-
     if Leyak_NPC ~= nil then
         local dist = CalcLeyakDistanceToPlayer()
         if ConfigLeyak.log_distance_to_player then
@@ -466,11 +358,8 @@ local function Handle_TriggerViewedByTarget()
         Leyak_NPC.ViewedByTarget = false
         Leyak_NPC.DistanceDifferenceToDespawn = ConfigLeyak.DistanceDifferenceToDespawn
 
-        -- Allow Leyak to Damage Even if Being Looked At
-        --Leyak_NPC.DealDamageInfront = true
+        -- Extend Reach to allow Leyak to damage even if being viewed
         Leyak_NPC.DamageSphere.SphereRadius = 400
-        -- Leyak_NPC.PotentiallyStuck = false
-        -- Leyak_NPC.AbsolutelyStuck = false
 
         -- Dismiss if hit by stationary tower
         if leyak_was_xrayed_by_tower then
@@ -497,9 +386,6 @@ local function Handle_TriggerViewedByTarget()
 
 
         if Leyak_NPC.HasBeenXrayed then
-            --TODO - could this allow target switch?
-            --ConfigLeyak.TargetPlayer = Leyak_NPC.TargetPlayer
-            --Leyak_NPC.TargetPlayer = nil
             leyak_xray_struck_counter = leyak_xray_struck_counter + 1
             Leyak_NPC.HasBeenXrayed = false
             leyak_was_xrayed = true
@@ -510,21 +396,14 @@ local function Handle_TriggerViewedByTarget()
             -- Currently setting leyak_is_restricted_by_xray to false will simply disable:
             --    1. the "stun" of leyak_is_restricted_by_xray_duration
             --    2. additional modifications to move speed, i.e leyak_is_restricted_by_xray_move_speed_factor
-
-            -- TODO Debug
-            print("HasBeenXrayed")
-
             if ConfigLeyak.leyak_is_restricted_by_xray then
-                print("leyak_is_restricted_by_xray True")
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_is_restricted_by_xray_move_walk,
                     ConfigLeyak.leyak_is_restricted_by_xray_move_sprint,
                     ConfigLeyak.leyak_is_restricted_by_xray_move_speed_factor)
             elseif ConfigLeyak.leyak_is_restricted_by_looking then
-                print("leyak_is_restricted_move_speed_factor")
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_is_restricted_move_walk, ConfigLeyak.leyak_is_restricted_move_sprint,
                     ConfigLeyak.leyak_is_restricted_move_speed_factor)
             else
-                print("leyak_nearby_speed_factor")
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_nearby_walk, ConfigLeyak.leyak_nearby_sprint,
                     ConfigLeyak.leyak_nearby_speed_factor)
             end
@@ -534,7 +413,9 @@ local function Handle_TriggerViewedByTarget()
                     ConfigLeyak.leyak_is_restricted_by_xray_move_sprint,
                     ConfigLeyak.leyak_is_restricted_by_xray_move_speed_factor)
                 leyak_xray_hold_counter = leyak_xray_hold_counter - 1
-                Utils.log("XRAY Hold Counter: " .. leyak_xray_hold_counter)
+                if ConfigLeyak.log_distance_to_player then
+                    Utils.log("XRAY Hold Counter: " .. leyak_xray_hold_counter)
+                end
             elseif ConfigLeyak.leyak_is_restricted_by_looking then
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_is_restricted_move_walk, ConfigLeyak.leyak_is_restricted_move_sprint,
                     ConfigLeyak.leyak_is_restricted_move_speed_factor)
@@ -590,7 +471,9 @@ local function Handle_TriggerTargetLookedAway()
 
         -- If Player has successfully evaded, force despawn
         if dist > ConfigLeyak.DistanceDifferenceToDespawn then
-            Utils.log("Player too far away, force despawn Leyak")
+            if ConfigLeyak.log_distance_to_player then
+                Utils.log("Player too far away, force despawn Leyak")
+            end
             leyak_evaded_by_player = true
             SetLeyakMoveSpeed(0.01, 0.01, 0.01)
             Leyak_NPC.RequiredMegalightDuration = 2
@@ -611,12 +494,6 @@ local function Handle_TriggerTargetLookedAway()
                     ConfigLeyak.leyak_nearby_speed_factor)
             end
         end
-
-
-        -- TODO: Crashing? Yes
-        -- Seems like it is dangerous to try and overwrite one or both of these
-        -- Leyak_NPC.StuckStartTime = 0
-        -- Leyak_NPC.TimeAllowedToBeStuck = ConfigLeyak.TimeAllowedToBeStuck
     end
 end
 
@@ -624,13 +501,12 @@ end
 local function Handle_OnMegalightHit(context, megalight, Tier)
     ml_type = megalight:get():GetFullName():sub(75, 94)
     -- i.e Deployed_Megalight_C_2147469838.MegalightComponent
-    --print(ml_type)
     if ml_type == "Deployed_Megalight_C" then
         -- Hit By XRAY Tower
         leyak_was_xrayed_by_tower = true
         leyak_was_dismissed = true
     else -- Item_LightSource_Megalight_C_2147408010.MegalightComponent
-        -- No Change
+         -- No Change
     end
 end
 
@@ -641,7 +517,7 @@ end
 -- ============================================================
 
 local function SetupOnGameStateHooks()
-    --void Request_SendTextChatMessage(FString MessageToSend);
+
     ExecuteWithDelay(2500, function()
         local okHook, errHook = pcall(RegisterHook,
             "/Game/Blueprints/Meta/Abiotic_PlayerController.Abiotic_PlayerController_C:Request_SendTextChatMessage",
@@ -719,7 +595,6 @@ local function SetupOnGameStateHooks()
     NotifyOnNewObject("/Game/Blueprints/Characters/NPCs/NPC_Leyak.NPC_Leyak_C", function(leyak)
         Handle_LeyakNotifyOnNewObject(leyak)
     end)
-
 
     -- Handle new Leyak Director
     NotifyOnNewObject("/Game/Blueprints/Environment/Systems/LeyakDirectorComponent.LeyakDirectorComponent_C", function(leyak_director)
@@ -818,31 +693,5 @@ end
 -- Define Hooks
 PollForHooks()
 
-
-ToggleKey = Key.F6
-ToggleKeyModifiers = {}
-
--- Setup Debug Hotkeys
-if ToggleKey then
-    local function BRVLYK_Debug()
-        ExecuteInGameThread(function()
-            Utils.log("Debug")
-            local admin_player = Utils.GetPlayerFromId(ConfigAdmin.admin_id)
-            local admin_player_controller = admin_player.MyPlayerController
-
-            Utils.AdminMessage("Message!", MOD_PREFIX, Enums.MsgColors.bg, Enums.MsgColors.red)
-
-            --local admin_player_name = Utils.GetPlayerName(admin_player)
-            local admin_player_name = Utils.GetPlayerNameFromID(ConfigAdmin.admin_id)
-
-            -- local msg = string.format("%s Test Message", admin_player_name)
-            -- admin_player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, msg, Enums.MsgColors.green, player_controller, false)
-        end)
-    end
-
-    RegisterKeyBind(ToggleKey, {}, function()
-        BRVLYK_Debug()
-    end)
-end
-
+-- Completed
 Utils.log("Braver Leyak Mod Loaded")
