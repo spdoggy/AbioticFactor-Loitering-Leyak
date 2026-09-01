@@ -44,6 +44,7 @@ Features implemented so far:
 5. Distance-to-Despawn
 6. Essence Settings
 7. Player Evasion Logic / Follow Across Loading/Area-Transition
+8. Drop Rate Settings for Leyak Essence
 
 
 ## Future Improvement Ideas
@@ -52,6 +53,5 @@ Features implemented so far:
 2. Leyak invisible until XRAY'd
 3. Teleport to player if lost
 4. Target Switch during active hunt
-5. Option to limit/prevent essence drop clutter
-6. Control DrainPerTick on the Hand-Held X-RAY Lamp
+5. Control DrainPerTick on the Hand-Held X-RAY Lamp
 
