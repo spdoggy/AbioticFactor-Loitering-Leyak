@@ -52,7 +52,7 @@ local leyak_was_xrayed = false
 local leyak_was_xrayed_by_tower = false
 local leyak_was_xrayed_by_lamp = false
 local leyak_was_xrayed_by_trinket = false
-local leyak_dropped_essence = false
+local leyak_dropped_essence_check = false
 local leyak_evaded_by_player = false
 local leyak_was_dismissed = false
 local leyak_caught_player = false
@@ -252,7 +252,7 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
     leyak_was_dismissed = false
     leyak_caught_player = false
     leyak_target_name = ""
-    leyak_dropped_essence = false
+    leyak_dropped_essence_check = false
     GetValidLeyakDir()
 
     ExecuteWithDelay(5000, function()
@@ -340,28 +340,30 @@ end
 ---Control X-RAY Leyak essence drop rates
 ---@param leyak ANPC_Leyak_C
 local function leyak_drop_essence(leyak)
+    -- Only Roll for Drop Once (combined methods)
+    if leyak_dropped_essence_check then
+        return
+    end
+
     local dice_roll
     dice_roll = math.random()
     if leyak_was_xrayed_by_tower then
         if (dice_roll <= (ConfigLeyak.leyak_xray_essence_tower_drop_rate / 100)) then
             leyak:DropEssence()
-            leyak_dropped_essence = true
         end
     elseif leyak_was_xrayed_by_lamp then
         if (dice_roll <= (ConfigLeyak.leyak_xray_essence_hlamp_drop_rate / 100)) then
             leyak:DropEssence()
-            leyak_dropped_essence = true
         end
     elseif leyak_was_xrayed_by_trinket then
         if (dice_roll <= (ConfigLeyak.leyak_xray_essence_trnkt_drop_rate / 100)) then
             leyak:DropEssence()
-            leyak_dropped_essence = true
         end
     else
         -- Fail Safe: Always
         leyak:DropEssence()
-        leyak_dropped_essence = true
     end
+    leyak_dropped_essence_check = true
 end
 
 local function Handle_TriggerViewedByTarget()
@@ -448,6 +450,8 @@ local function Handle_TriggerViewedByTarget()
                 if ConfigLeyak.log_distance_to_player then
                     Utils.log("XRAY Hold Counter: " .. leyak_xray_hold_counter)
                 end
+                -- [TODO] [Bugged] Sometimes entering combat state X-RAY stunned,
+                -- locks the leyak in combat mode
             elseif ConfigLeyak.leyak_is_restricted_by_looking then
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_is_restricted_move_walk, ConfigLeyak.leyak_is_restricted_move_sprint,
                     ConfigLeyak.leyak_is_restricted_move_speed_factor)

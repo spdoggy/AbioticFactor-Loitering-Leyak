@@ -65,10 +65,10 @@ return {
     -- !Warning: Setting both tower and hlamp to 0 will block player progression in labs!
 
     -- Percent Chance to Drop Essence on hit by XRAY Tower
-    leyak_xray_essence_tower_drop_rate = 20,
+    leyak_xray_essence_tower_drop_rate = 5,
 
     -- Percent Chance to Drop Essence on hit by hand-held XRAY Lamp
-    leyak_xray_essence_hlamp_drop_rate = 20,
+    leyak_xray_essence_hlamp_drop_rate = 5,
 
     -- Percent Chance to Drop Essence when stunned by Sensory Companion Trinket
     leyak_xray_essence_trnkt_drop_rate = 5,
@@ -94,9 +94,9 @@ return {
     -- Random % chance of Sensor Companion trinket not working
     leyak_random_trinket_pct_failure_chance = 10,
     -- Random % chance of Leyak movement being restricted upon viewing
-    leyak_random_restrict_on_look_chance = 5,
+    leyak_random_restrict_on_look_chance = 50,
     -- Random % chance of Leyak being dismissed upon viewing
-    leyak_random_is_dismissed_by_looking_chance = 1,
+    leyak_random_is_dismissed_by_looking_chance = 10,
 
 
     -- ============================================================
