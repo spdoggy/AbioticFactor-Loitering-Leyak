@@ -50,6 +50,8 @@ local leyak_xray_hold_counter = 0
 local leyak_xray_struck_counter = 0
 local leyak_was_xrayed = false
 local leyak_was_xrayed_by_tower = false
+local leyak_was_xrayed_by_lamp = false
+local leyak_was_xrayed_by_trinket = false
 local leyak_dropped_essence = false
 local leyak_evaded_by_player = false
 local leyak_was_dismissed = false
@@ -250,7 +252,8 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
     leyak_was_dismissed = false
     leyak_caught_player = false
     leyak_target_name = ""
-    local leyak_director = GetValidLeyakDir()
+    leyak_dropped_essence = false
+    GetValidLeyakDir()
 
     ExecuteWithDelay(5000, function()
         -- Record how far away the Leyak is from target
@@ -334,6 +337,32 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
     end)
 end
 
+---Control X-RAY Leyak essence drop rates
+---@param leyak ANPC_Leyak_C
+local function leyak_drop_essence(leyak)
+    local dice_roll
+    dice_roll = math.random()
+    if leyak_was_xrayed_by_tower then
+        if (dice_roll <= (ConfigLeyak.leyak_xray_essence_tower_drop_rate / 100)) then
+            leyak:DropEssence()
+            leyak_dropped_essence = true
+        end
+    elseif leyak_was_xrayed_by_lamp then
+        if (dice_roll <= (ConfigLeyak.leyak_xray_essence_hlamp_drop_rate / 100)) then
+            leyak:DropEssence()
+            leyak_dropped_essence = true
+        end
+    elseif leyak_was_xrayed_by_trinket then
+        if (dice_roll <= (ConfigLeyak.leyak_xray_essence_trnkt_drop_rate / 100)) then
+            leyak:DropEssence()
+            leyak_dropped_essence = true
+        end
+    else
+        -- Fail Safe: Always
+        leyak:DropEssence()
+        leyak_dropped_essence = true
+    end
+end
 
 local function Handle_TriggerViewedByTarget()
     -- Default overrides all other settings
@@ -351,6 +380,7 @@ local function Handle_TriggerViewedByTarget()
         if ConfigLeyak.leyak_is_dismissed_by_sensory_companion_trinket then
             if doesPlayerHaveBuff(Leyak_NPC.TargetPlayer, Enums.Buffs.Buff_Leyak360) then
                 Leyak_NPC.HasBeenXrayed = true
+                leyak_was_xrayed_by_trinket = true
             end
         end
 
@@ -374,18 +404,20 @@ local function Handle_TriggerViewedByTarget()
             Leyak_NPC.RequiredMegalightDuration = 2
             Leyak_NPC.HasBeenXrayed = true
             Leyak_NPC.PrepareLeyakDespawn()
-            Leyak_NPC:DropEssence()
+            leyak_drop_essence(Leyak_NPC)
             leyak_xray_hold_counter = ConfigLeyak.leyak_is_restricted_by_xray_duration
             leyak_was_dismissed = true
             return
-        elseif leyak_xray_struck_counter > ConfigLeyak.leyak_xray_essense_time then
-            Leyak_NPC:DropEssence()
+        elseif leyak_xray_struck_counter > ConfigLeyak.leyak_xray_essence_time then
+            leyak_drop_essence(Leyak_NPC)
         else
             Leyak_NPC.RequiredMegalightDuration = ConfigLeyak.leyak_xray_dismissal_time
         end
 
 
         if Leyak_NPC.HasBeenXrayed then
+            Leyak_NPC.PotentiallyStuck = false
+            Leyak_NPC.AbsolutelyStuck = false
             leyak_xray_struck_counter = leyak_xray_struck_counter + 1
             Leyak_NPC.HasBeenXrayed = false
             leyak_was_xrayed = true
@@ -506,6 +538,8 @@ local function Handle_OnMegalightHit(context, megalight, Tier)
         leyak_was_xrayed_by_tower = true
         leyak_was_dismissed = true
     else -- Item_LightSource_Megalight_C_2147408010.MegalightComponent
+        leyak_was_xrayed_by_tower = false
+        leyak_was_xrayed_by_lamp = true
          -- No Change
     end
 end

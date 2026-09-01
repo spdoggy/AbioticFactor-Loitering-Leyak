@@ -36,14 +36,15 @@ return {
     -- TODO: Not Yet Implemented
     leyak_can_be_invisible = true,
 
-    -- XRAY Dimissal Time.
+    -- XRAY Dismissal Time.
     -- Controls how long the Leyak needs to be hit by a hand-held XRAY lamp to disappear
     -- [leyak_xray_dismissal_time_max] will be overwritten with a random value between 
-    -- the min/max range. Default: 3. 
+    -- the min/max range. Default: 3.
+    -- Not to be confused with the X-RAY Defense Tower, which will ALWAYS IMMEDIATELY dismiss.
     -- Set the mix/max range to very high to disable XRAY dismissal (i.e 10000) and
     -- encourage players to run away or juggle stunning the leyak while dealing with other 
     -- combatants in the area.
-    -- If disabling, be sure to set the [leyak_xray_essense_time] below to a reasonable
+    -- If disabling, be sure to set the [leyak_xray_essence_time] below to a reasonable
     -- value to allow players to collect Leyak Essence 
     leyak_xray_dismissal_time_max = 10000,
     leyak_xray_dismissal_time_min = 500,
@@ -51,15 +52,29 @@ return {
 
     -- Leyak Essence Drop Time.
     -- Make the Leyak drop and essence after X amount of time under any XRAY beam,
-    -- even if the Leyak has not yet despawned.
-    -- Warning: [leyak_xray_dismissal_time_max] must be a reasonable value 
+    -- even if the Leyak has not yet de-spawned.
+    -- !Warning: [leyak_xray_dismissal_time_max] must be a reasonable value 
     -- when [leyak_xray_dismissal_time] is set to a very large value, 
     -- otherwise lack of dismissal by XRAY will prevent players from
     -- collecting Leyak Essence for progression
-    leyak_xray_essense_time = 100,
+    leyak_xray_essence_time = 100,
+
+    -- Leyak Essence Drop Rate Settings
+    -- Configure Leyak % Chance to Drop Essence (100 = Always, 0 = Never)
+    -- Allows limiting nuisance drops from towers/lamps
+    -- !Warning: Setting both tower and hlamp to 0 will block player progression in labs!
+
+    -- Percent Chance to Drop Essence on hit by XRAY Tower
+    leyak_xray_essence_tower_drop_rate = 20,
+
+    -- Percent Chance to Drop Essence on hit by hand-held XRAY Lamp
+    leyak_xray_essence_hlamp_drop_rate = 20,
+
+    -- Percent Chance to Drop Essence when stunned by Sensory Companion Trinket
+    leyak_xray_essence_trnkt_drop_rate = 5,
 
     -- Distance the player must run to escape the Leyak
-    -- If the leyak despawns/is-stuck for any reason then 
+    -- If the leyak de-spawns/is-stuck for any reason then 
     -- a new encounter will immediately be spawned to continue hunting.
     -- Current Valid Escape Conditions are:
     -- 1. Player is more than DistanceDifferenceToDespawn meters from leyak [leyak_evaded_by_player]
@@ -78,9 +93,9 @@ return {
 
     -- Random % chance of Sensor Companion trinket not working
     leyak_random_trinket_pct_failure_chance = 10,
-    -- Random % chance of Leyak movment being restricted upon viewing
+    -- Random % chance of Leyak movement being restricted upon viewing
     leyak_random_restrict_on_look_chance = 5,
-    -- Random % chance of Leyak movment being dismissed upon viewing
+    -- Random % chance of Leyak being dismissed upon viewing
     leyak_random_is_dismissed_by_looking_chance = 1,
 
 
@@ -106,7 +121,7 @@ return {
     leyak_nearby_speed_factor = 1.5,
 
     -- Gives Leyak a Big Speed Boost when greater than [leyak_stalking_distance] away from player.
-    leyak_stalking_distance = 3000,
+    leyak_stalking_distance = 2500,
     leyak_stalking_walk = 1000,
     leyak_stalking_sprint = 300,
     leyak_stalking_speed_factor = 7,

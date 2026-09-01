@@ -53,4 +53,5 @@ Features implemented so far:
 3. Teleport to player if lost
 4. Target Switch during active hunt
 5. Option to limit/prevent essence drop clutter
+6. Control DrainPerTick on the Hand-Held X-RAY Lamp
 
