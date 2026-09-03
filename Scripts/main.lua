@@ -156,6 +156,7 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
             return
         end
         ConfigLeyak.leyak_is_dismissed_by_looking = false
+        ConfigLeyak.leyak_is_behavior_randomized = true
         local msg = "The Leyak has noticed you.."
         player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.red, msg, Enums.MsgColors.red,
             player_controller, false)
