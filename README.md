@@ -147,7 +147,7 @@ Randomizes choice between the new Leyak behavior modes! Keep the players guessin
 - ```leyak_is_dismissed_by_sensory_companion_trinket```
 - ```leyak_is_invisible```
 
-See Randomization section in ```config_leyak.lua``` to configure the percent chance of each mode.
+- See Randomization section in ```config_leyak.lua``` to configure the percent chance of each mode.
 
 
 ## Future Improvement Ideas
