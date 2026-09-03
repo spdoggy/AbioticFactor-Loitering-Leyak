@@ -118,7 +118,7 @@ return {
     -- Move Speeds when Leyak is being viewed AND leyak_is_restricted_by_looking == true
     leyak_is_restricted_move_walk = 400,
     leyak_is_restricted_move_sprint = 400,
-    leyak_is_restricted_move_speed_factor = 0.1,
+    leyak_is_restricted_move_speed_factor = 0.3,
 
     -- Move Speeds after Leyak has been hit by an XRAY and leyak_is_restricted_by_xray == true
     -- Lasts for [leyak_is_restricted_by_xray_duration] time.  Set to zero to freeze Leyak in place.
