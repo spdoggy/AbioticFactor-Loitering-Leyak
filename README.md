@@ -49,7 +49,8 @@ Additionally, if ```admin_messages_enabled``` is true in the ```config_leyak.lua
 to the valid admin using the text chat box. i.e when a new Leyak is spawned, what behavior mode the Leyak is in, who it is stalking, etc.
 
 ### Chat Commands:
-help                   - Remind the user about the "lleyak_help" command
+
+```help                   - Remind the user about the "lleyak_help" command
 lleyak_help            - Print a list of text commands for this mod to the in-game chat box
 ToggleLeyakVoice       - Toggle Leyak Random Voice On/Off
 tlv                    - Toggle Leyak Random Voice On/Off (shorthand)
@@ -57,7 +58,8 @@ SetLeyakCooldown #     - Override the default Leyak cooldown to the new number s
 slc #                  - Shorthand command for SetLeyakCooldown, i.e slc 400 to set Leyak default cooldown to 400 secs
 glc                    - Shorthand command for displaying the current Leyak cooldown setting. Prints the current value to the chat.
 players_are_too_scared - Disables most of this mod's features and returns the Leyak to base-game functionality
-players_are_not_scared_enough - Un-does the "players_are_too_scared", and sets Leyak behavior to randomized
+players_are_not_scared_enough - Un-does the "players_are_too_scared", and sets Leyak behavior to randomized```
+
 
 ## Features
 
