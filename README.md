@@ -130,13 +130,13 @@ get rid of the Leyak or she will continue the hunt. Teammates can help keep the 
 7. Player Evasion Mechanics
 The player must reach a safe distance now to safely escape the Leyak, or the hunt will restart. If the Leyak de-spawns or 
 gets stuck for any other reason, the hunt will also re-start. So just running across a loading screen to the next zone
-won't always work!
-
-Current Valid Escape Conditions are:
+won't always work! Current Valid Escape Conditions are:
+```
 - Player gets more than ```DistanceDifferenceToDespawn``` meters from the leyak
 - leyak_was_dismissed [HasBeenXrayed == true]
 - leyak entered combat state for a grab attack
 - Any despawn during the default behavior mode (i.e playing with normal settings and the leyak is dismissed by looking)
+```
 
 8. RANDOM!
 Randomizes choice between the new Leyak behavior modes! Keep the players guessing.
