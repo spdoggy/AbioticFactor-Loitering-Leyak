@@ -41,6 +41,7 @@ local leyak_caught_player = false
 local leyak_target_name = ""
 local leyak_is_invisible = false
 local leyak_sound_cue_started = false
+local leyak_recently_spoke = false
 
 -- ============================================================
 -- INSTANCES
@@ -160,6 +161,24 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
             player_controller, false)
     end
 
+    if (msg_fmt[1] == "tls" or msg_fmt[1] == "tlv" or msg_fmt[1] == "ToggleLeyakVoice") and max_key == 1 then
+        if steam_display_name ~= ConfigAdmin.admin_name then
+            return
+        end
+        ConfigLeyak.leyak_use_random_voice = not ConfigLeyak.leyak_use_random_voice
+        
+        if ConfigLeyak.leyak_use_random_voice then
+            msg = "Leyak random voice: ENABLED"
+            player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.green, msg, Enums.MsgColors.green,
+            player_controller, false)
+        else
+            local msg = "Leyak random voice: DISABLED"
+            player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.red, msg, Enums.MsgColors.red,
+            player_controller, false)
+        end
+        
+        
+    end
 
     local msg_out = ""
     if max_key == 1 then
@@ -179,6 +198,9 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
                     Enums.MsgColors.green,
                     player_controller, false)
                 player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, "slc new_cooldown",
+                    Enums.MsgColors.green,
+                    player_controller, false)
+                player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, "tls",
                     Enums.MsgColors.green,
                     player_controller, false)
 
@@ -283,6 +305,32 @@ local function WorldEventFlagsAllowLeyak()
     end
 end
 
+--- Randomly Play voice Lines from the ConfigLeyak if conditions are right
+local function LeyakDoRandomSpeech()
+    if ConfigLeyak.leyak_use_random_voice and not leyak_recently_spoke then
+
+        -- No dialog if the settings disabled not speaking while invisible
+        if leyak_is_invisible and not ConfigLeyak.leyak_use_random_voice_while_invisible then
+            return
+        end
+
+        local leyak_npc = GetValidLeyak()
+        if Utils.IsValid(leyak_npc) then            
+            leyak_recently_spoke = true
+            local dice_roll_speak = math.random()
+            if dice_roll_speak <= (ConfigLeyak.leyak_use_random_voice_freq/100) then
+                local random_voice = ConfigLeyak.leyak_random_voice_lines[math.random( #ConfigLeyak.leyak_random_voice_lines)]  
+                vol = ConfigLeyak.leyak_random_voice_volume
+                Utils.PlaySoundAtActor(random_voice.path, leyak_npc, vol, random_voice.pitch, true)
+            end
+            local speak_delay = 1000 + math.floor(ConfigLeyak.leyak_random_voice_time_between_sec * 1000.0)
+            ExecuteWithDelay(speak_delay, function()
+                leyak_recently_spoke = false
+            end)
+        end
+    end
+end
+
 local function LeyakCheckInvisibleSoundCue()
     local leyak_npc = GetValidLeyak()
     -- Limit to one loop instance per spawn
@@ -355,6 +403,7 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
     leyak_target_name = ""
     leyak_dropped_essence_check = false
     leyak_sound_cue_started = false
+    leyak_recently_spoke = false
 
     GetValidLeyakDir()
 
@@ -521,6 +570,9 @@ local function Handle_TriggerViewedByTarget()
         -- Extend Reach to allow Leyak to damage even if being viewed
         leyak_npc.DamageSphere.SphereRadius = 400
 
+        -- Attempt Speech
+        LeyakDoRandomSpeech()
+
         -- Dismiss if hit by stationary X-RAY defense tower
         if leyak_was_xrayed_by_tower then
             leyak_xray_struck_counter = ConfigLeyak.leyak_xray_dismissal_time + 1
@@ -647,6 +699,8 @@ local function Handle_TriggerTargetLookedAway()
     if Utils.IsValid(leyak_npc) then
         leyak_npc.ViewedByTarget = false
 
+        LeyakDoRandomSpeech()
+
         dist = CalcLeyakDistanceToPlayer()
         if ConfigLeyak.log_distance_to_player then
             Utils.log("----------------------")
@@ -668,6 +722,9 @@ local function Handle_TriggerTargetLookedAway()
             leyak_npc.PrepareLeyakDespawn()
             return
         end
+
+        -- Attempt Speech
+        LeyakDoRandomSpeech()
 
         if leyak_xray_hold_counter > 0 and ConfigLeyak.leyak_is_restricted_by_xray then
             leyak_xray_hold_counter = leyak_xray_hold_counter - 1
@@ -932,17 +989,20 @@ if ToggleKey then
 
             -- local event_flags = Utils.GetWorldEventFlags()
             -- print(event_flags)
-
+            print(ConfigLeyak.leyak_random_voice_time_between_sec)
+            local speak_delay = 1000 + math.floor(ConfigLeyak.leyak_random_voice_time_between_sec * 1000.0)
 
             if WorldEventFlagsAllowLeyak() then
                 
                 print("Leyak is Allowed Yay!")
             end
             --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
-            Utils.PlaySoundAtPlayer(snd_path, admin_player, 3, 1.4)
+            
+            -- Utils.PlaySoundAtActor(snd_path, admin_player, 3, 1.3, true)
+            
+            --Utils.PlaySoundAtActorAndWait(snd_path, admin_player, 3, 1.4)
 
-
-            print(snd_path)
+            --print(snd_path)
             --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
          
         end)

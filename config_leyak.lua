@@ -146,6 +146,92 @@ return {
 
 
     -- ============================================================
+    -- Silly Stuff
+    -- ============================================================
+    -- Enable or Disable random voices
+    leyak_use_random_voice = true,
+
+    -- Leyak can still randomly speak dialog while using the new invisibility mode
+    leyak_use_random_voice_while_invisible = true,
+
+    -- Volume for Leyak's Random Voice Dialogue
+    leyak_random_voice_volume = 3,
+
+    -- How many seconds to wait between trying to speak voice lines
+    leyak_random_voice_time_between_sec = 5,
+
+    -- Controls the randomization element for how often to speak voice lines.
+    -- How often to succeed at speaking lines every [leyak_random_voice_time_between_sec] seconds
+    --      100 = Always succeeds, 50 = Half of the time, 0 = Never
+    --
+    -- Example: try to speak every 5 seconds but only succeed at 1/4, effectively this should 
+    -- try to make the leyak speak a voice line every ~20 seconds, 
+    -- but could be shorter or longer depending on randomization:
+    --      leyak_random_voice_time_between_sec = 5,
+    --      leyak_use_random_voice_freq = 25.0,
+    --
+    --   
+    leyak_use_random_voice_freq = 25.0,
+
+    -- Voice Line List
+    -- Example: Play a Coworker Voice line at 1.3 x NormalPitch        
+    --  {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_01.s_cm_idle_01"},
+    --
+    leyak_random_voice_lines = {
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_01.s_cm_idle_01"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_02.s_cm_idle_02"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_03.s_cm_idle_03"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_04.s_cm_idle_04"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_05.s_cm_idle_05"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_06.s_cm_idle_06"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_07.s_cm_idle_07"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_08.s_cm_idle_08"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_09.s_cm_idle_09"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_10.s_cm_idle_10"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_11.s_cm_idle_11"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_12.s_cm_idle_12"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_13.s_cm_idle_13"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_14.s_cm_idle_14"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_01.s_cm_ty_01"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_02.s_cm_ty_02"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_03.s_cm_ty_03"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_04.s_cm_ty_04"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_05.s_cm_ty_05"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_06.s_cm_ty_06"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_07.s_cm_ty_07"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_08.s_cm_ty_08"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_09.s_cm_ty_09"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_10.s_cm_ty_10"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_11.s_cm_ty_11"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_12.s_cm_ty_12"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_01.s_cm_ty_01"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_02.s_cm_ty_02"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_03.s_cm_ty_03"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_04.s_cm_ty_04"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_05.s_cm_ty_05"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_06.s_cm_ty_06"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_07.s_cm_ty_07"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_08.s_cm_ty_08"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_09.s_cm_ty_09"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_10.s_cm_ty_10"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_11.s_cm_ty_11"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_ty_12.s_cm_ty_12"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_01.s_cm_bye_01"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_02.s_cm_bye_02"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_03.s_cm_bye_03"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_04.s_cm_bye_04"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_05.s_cm_bye_05"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_06.s_cm_bye_06"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_07.s_cm_bye_07"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_08.s_cm_bye_08"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_09.s_cm_bye_09"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_10.s_cm_bye_10"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_11.s_cm_bye_11"},
+        {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_bye_12.s_cm_bye_12"},
+    },
+
+
+    -- ============================================================
     -- Debug Settings
     -- ============================================================
     admin_messages_enabled = true,
