@@ -273,8 +273,6 @@ end
 local function WorldEventFlagsAllowLeyak()
     if ConfigLeyak.leyak_limit_behavior_until_world_flags then
         for k, v in pairs(ConfigLeyak.world_flags_required) do
-            --TODO: Remove debug
-            print(v)
             if Utils.WorldHasEventOccurred(v) then
                 return true
             end
@@ -287,22 +285,13 @@ end
 
 local function LeyakCheckInvisibleSoundCue()
     local leyak_npc = GetValidLeyak()
-
-    print("LeyakCheckInvisibleSoundCue")
     -- Limit to one loop instance per spawn
     if leyak_sound_cue_started then
         return
     end
     leyak_sound_cue_started = true
-    print("LeyakCheckInvisibleSoundCue")
-
-
-    print(leyak_npc)
-    print(leyak_is_invisible)
     -- Check if Leyak is still invisible and not under and XRAY or evade conditions
     if Utils.IsValid(leyak_npc) and leyak_is_invisible then
-
-        print("LoopAsync")
         -- Play an idle every 1 second while conditions warrant it
         LoopAsync(1500, function()
             if leyak_was_xrayed then
@@ -347,7 +336,7 @@ local function LeyakCheckInvisibleSoundCue()
         end)
 
     else
-        print("Not Valid")
+        return
     end
 end
 
