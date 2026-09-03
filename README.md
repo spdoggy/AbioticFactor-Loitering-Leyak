@@ -45,13 +45,12 @@ Features implemented so far:
 6. Essence Settings
 7. Player Evasion Logic / Follow Across Loading/Area-Transition
 8. Drop Rate Settings for Leyak Essence
-
+9. Leyak invisible until XRAY'd
 
 ## Future Improvement Ideas
 
 1. Leyak no-clip mode
-2. Leyak invisible until XRAY'd
-3. Teleport to player if lost
-4. Target Switch during active hunt
-5. Control DrainPerTick on the Hand-Held X-RAY Lamp
+2. Teleport to player if lost
+3. Target Switch during active hunt
+4. Control DrainPerTick on the Hand-Held X-RAY Lamp
 
