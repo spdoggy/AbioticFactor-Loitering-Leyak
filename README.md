@@ -132,8 +132,8 @@ The player must reach a safe distance now to safely escape the Leyak, or the hun
 gets stuck for any other reason, the hunt will also re-start. So just running across a loading screen to the next zone
 won't always work! Current Valid Escape Conditions are:
 ```
-- Player gets more than ```DistanceDifferenceToDespawn``` meters from the leyak
-- leyak_was_dismissed [HasBeenXrayed == true]
+- Player gets more than [DistanceDifferenceToDespawn] meters from the leyak
+- leyak_was_dismissed (disappears) by any XRAY (or trinket)
 - leyak entered combat state for a grab attack
 - Any despawn during the default behavior mode (i.e playing with normal settings and the leyak is dismissed by looking)
 ```
