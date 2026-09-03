@@ -116,7 +116,8 @@ The leyak will continue to give off sound cues to give the player hints at where
 There are controls to prevent the Leyak from immediately de-spawning when hit by a hand-held XRAY lamp.
 These settings also control how long players must hit the Leyak with a hand-held XRAY lamp to dismiss her (or the trinket
 if that is enabled). Setting leyak_xray_dismissal_time above ~ 5000 or 6000 will mean that the hand-held XRAY lamp will
-(generally) completely drain it's battery before the Leyak would disappear.
+(generally) completely drain it's battery before the Leyak would disappear. Not to be confused with the base defense Tower X-RAY.
+The base defense Tower Defense X-RAY turret will always still immediately make the Leyak disappear. 
 
 The XRAY dismissal time is randomized between a min/max setting value, see 
 ```leyak_xray_dismissal_time_min```, ```leyak_xray_dismissal_time_max``` in the ```config_leyak.lua``` file to control it.
@@ -155,4 +156,4 @@ See Randomization section in ```config_leyak.lua``` to configure the percent cha
 02. Teleport to player if lost
 03. Target Switch to another player during active hunt
 04. Control DrainPerTick on the Hand-Held X-RAY Lamp
-
+05. A mechanic to let players temporarily obtain the "Buff_LeyakSafetyZone"
