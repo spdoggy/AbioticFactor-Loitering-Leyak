@@ -392,25 +392,6 @@ function Utils.PlaySFX(snd_path, volume, stop_delay)
     end)
 end
 
----Play Sound at Player using GameplayStatics
----@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
----@param player AAbiotic_PlayerCharacter_C Player where sound should be played near
----@param volume float|number -- Sound volume
----@param pitch float|number -- Sound pitch, default 1.0
-function Utils.PlaySoundAtPlayer(snd_path, player, vol, pitch)
-    LoadAsync({ snd_path }, function()
-        local gs = StaticFindObject("/Script/Engine.Default__GameplayStatics")
-        local world = TheWorld
-        local sound = StaticFindObject(snd_path)
-        if sound and Utils.IsValid(sound) and Utils.IsValid(player) then
-            local location = player:K2_GetActorLocation()
-            local rotation = {}
-            local start_at = 0.0       
-            gs:PlaySoundAtLocation(world, sound, location, rotation, vol, pitch, start_at, nil, nil, nil, nil)
-        end
-    end)
-end
-
 
 ---Play Sound at Locating using GameplayStatics
 ---@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
@@ -428,5 +409,26 @@ function Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch)
         end
     end)
 end
+
+
+---Play Sound at Player using GameplayStatics
+---@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
+---@param player AAbiotic_PlayerCharacter_C Player where sound should be played near
+---@param volume float|number -- Sound volume
+---@param pitch float|number -- Sound pitch, default 1.0
+function Utils.PlaySoundAtPlayer(snd_path, player, volume, pitch)
+    LoadAsync({ snd_path }, function()
+        if  Utils.IsValid(player) then
+            local location = player:K2_GetActorLocation()
+            local rotation = {}
+            Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch)
+        end
+    end)
+end
+
+
+
+
+
 
 return Utils
