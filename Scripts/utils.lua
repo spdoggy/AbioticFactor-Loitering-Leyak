@@ -20,6 +20,7 @@ local TheWorld = CreateInvalidObject() ---@cast WorldCache UWorld
 local LeyakNpcCache = CreateInvalidObject() -- @ANPC_Leyak_C;
 local LeyakDirectorCache = CreateInvalidObject() -- @ULeyakDirectorComponent_C;
 local AIDirectorCache = CreateInvalidObject() ---@cast AIDirectorCache AAbiotic_AIDirector_C
+local sound_has_finished = true
 
 -- ============================================================
 -- UTILITIES
@@ -398,37 +399,60 @@ end
 ---@param location table -- Location to play sound at
 ---@param volume float|number -- Sound volume
 ---@param pitch float|number -- Sound pitch, default 1.0
-function Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch)
+---@param wait boolean -- Wait for the sound to complete before accepting new sounds
+function Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch, wait)
     LoadAsync({ snd_path }, function()
         local gs = StaticFindObject("/Script/Engine.Default__GameplayStatics")
         local world = TheWorld
         local sound = StaticFindObject(snd_path)
         local start_at = 0.0
-        if sound and Utils.IsValid(sound) then            
+        local wait = wait or false
+
+        -- Return if not accepting and prev sound has not finished
+        if wait and not sound_has_finished then
+            return
+        end
+        if sound and Utils.IsValid(sound) then
+            
+            sound_has_finished = false
             gs:PlaySoundAtLocation(world, sound, location, rotation, volume, pitch, start_at, nil, nil, nil, nil)
+            local sound_off_delay = 1000 + math.floor(sound.Duration)
+            
+            ExecuteWithDelay(sound_off_delay, function()
+                print("sound_has_finished")
+                sound_has_finished = true
+            end)
         end
     end)
 end
 
 
----Play Sound at Player using GameplayStatics
+---Play Sound at Player or Actor using GameplayStatics
 ---@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
----@param player AAbiotic_PlayerCharacter_C Player where sound should be played near
+---@param player AAbiotic_PlayerCharacter_C|AActor where sound should be played near
 ---@param volume float|number -- Sound volume
 ---@param pitch float|number -- Sound pitch, default 1.0
-function Utils.PlaySoundAtPlayer(snd_path, player, volume, pitch)
-    LoadAsync({ snd_path }, function()
-        if  Utils.IsValid(player) then
-            local location = player:K2_GetActorLocation()
-            local rotation = {}
-            Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch)
-        end
-    end)
+---@param wait boolean -- Wait for the sound to complete before accepting new sounds
+function Utils.PlaySoundAtActor(snd_path, player_or_actor, volume, pitch, wait)
+    if  Utils.IsValid(player_or_actor) then
+        local location = player_or_actor:K2_GetActorLocation()
+        local rotation = {}
+        local wait = wait or false
+        Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch, wait)
+    end
 end
 
 
-
-
+---Play Sound at Player or Actor using GameplayStatics, Overload of Utils.PlaySoundAtActor
+---@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
+---@param player AAbiotic_PlayerCharacter_C|AActor where sound should be played near
+---@param volume float|number -- Sound volume
+---@param pitch float|number -- Sound pitch, default 1.0
+---@param wait boolean -- Wait for the sound to complete before accepting new sounds
+function Utils.PlaySoundAtPlayer(snd_path, player_or_actor, volume, pitch, wait)
+    local wait = wait or false
+    Utils.PlaySoundAtActor(snd_path, player_or_actor, volume, pitch)
+end
 
 
 return Utils
