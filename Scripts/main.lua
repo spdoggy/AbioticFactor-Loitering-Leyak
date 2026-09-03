@@ -188,7 +188,7 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
                 Enums.MsgColors.white, player_controller, false)
         end
 
-        if msg_fmt[1] == "LLEYAK_help" then
+        if msg_fmt[1] == "lleyak_help" then
             local delay = 4000
             if steam_display_name == ConfigAdmin.admin_name then
                 player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg,
