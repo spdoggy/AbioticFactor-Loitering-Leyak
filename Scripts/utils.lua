@@ -255,8 +255,49 @@ function Utils.PlayTextChatMessage(player, msg, msg_prefix, prefix_color,  msg_c
     end
 end
 
+
+---Get a List of the story event flags
+---@return table
+function Utils.GetWorldEventFlags()
+
+    wfs = FindFirstOf("WorldFlagSubsystem")
+
+    if not Utils.IsValid(wfs) then
+        return {}
+    end
+
+    local ok, loaded = pcall(function() return wfs:HasWorldFlagsLoaded() end)
+    if not ok or not loaded then return nil end
+
+    local out = {}
+    local flags = {}
+    pcall(function() wfs:GetWorldFlags(flags) end)
+    for _, f in ipairs(flags) do
+        local ok2, name = pcall(function() return f:get():ToString() end)
+        if ok2 and name and name ~= "" then out[name] = true end
+    end
+    return out
+end
+
+---Returns true if an event name is true in the world event log
+---@return boolean
+function Utils.WorldHasEventOccurred(event_name)
+    local event_flags = Utils.GetWorldEventFlags()
+    for k, v in pairs(event_flags) do
+        if k == event_name and v then
+            return true
+        end
+    end
+    return false
+end
+
+
 Utils.AssetCache = {}
 
+---Wait and load the asset at path when able
+---Used with LoadAsync
+---@param path string -- The asset path to load
+---@param callback any -- The call handler
 function Utils.LoadAssets(path, callback)
 
     local obj = StaticFindObject(path)
@@ -266,61 +307,29 @@ function Utils.LoadAssets(path, callback)
         return
     end
 
-
-    -- drop the invalid wrapper before reloading
-    -- if cached then ASSETS.Cache[path] = nil end 
-
-    -- Already loading: park the callback
-    -- if ASSETS.Loading[path] then
-    --     ASSETS.Waiters[path] = ASSETS.Waiters[path] or {}
-    --     table.insert(ASSETS.Waiters[path], callback)
-    --     return
-    -- end
-
-    -- ASSETS.Loading[path] = true
-    -- ASSETS.Waiters[path] = { callback }
-
     ExecuteInGameThread(function()
-        -- Freeze breadcrumb (SETTINGS.DEBUG_FREEZE_TRACE reporting; see TickManager).
-        --   * A cold LoadAsset here is a BLOCKING load - if the process hangs inside it,
-        --     the watchdog names the asset.
-        -- STATE.LastWork = "EIGT LoadAsset " .. path
-        -- STATE.LastWorkDone = false
-
         local asset, found, loaded = LoadAsset(path)
-        -- STATE.LastWorkDone = true
-
         if found and loaded and Utils.IsValid(asset) then
             Utils.AssetCache[path] = asset
 
-            -- COLD LOAD: we got here only because the cache and StaticFindObject both missed,
-            -- so this asset genuinely wasn't resident. Logging the path makes GC measurable -
-            -- the same path cold-loading twice in one session means it was collected in
-            -- between, which is what AssetKeeper exists to prevent. UE4SS's own "Asset loaded"
-            -- line carries no path, so it can't tell a first load from a re-load.
-            Utils.log("ASSETS cold-load: " .. path)
+            Utils.log("ASSETS loaded: " .. path)
         else
             Utils.error("ASSETS failed to load: " .. path)
             Utils.AssetCache[path] = nil
         end
-
-        -- local waiters = ASSETS.Waiters[path] or {}
-        -- ASSETS.Loading[path] = nil
-        -- ASSETS.Waiters[path] = nil
         local waiters = {path}
-        -- STATE.LastWork = "EIGT LoadAsset-cb " .. path
-        -- STATE.LastWorkDone = false
         for _, cb in ipairs(waiters) do
             local ok, err = pcall(callback, path)
             if not ok then
                 Utils.error("ASSETS callback error: " .. tostring(err))
             end
         end
-        --STATE.LastWorkDone = true
     end)
 end
 
-
+---Wait and load the assets in paths when able
+---@param paths string -- The asset paths to load
+---@param finalCallback any -- The call handler for after asset has loaded
 function LoadAsync(paths, finalCallback)
     local remaining = #paths
     local results = {}
@@ -341,8 +350,11 @@ function LoadAsync(paths, finalCallback)
     end
 end
 
-
-function Utils.PlaySFX(snd_path, player, volume, start_delay, stop_delay)
+---Play Sound in World using GameplayStatics
+---@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
+---@param volume float -- Sound volume
+---@param stop_delay number -- Delay before stopping
+function Utils.PlaySFX(snd_path, volume, stop_delay)
 
 
     LoadAsync({ snd_path }, function()
@@ -380,14 +392,39 @@ function Utils.PlaySFX(snd_path, player, volume, start_delay, stop_delay)
     end)
 end
 
----Play Sound at Locating using GameplayStatics
-function Utils.PlaySoundAtLocation(snd_path, location, rotation, vol, pitch, start_time)
+---Play Sound at Player using GameplayStatics
+---@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
+---@param player AAbiotic_PlayerCharacter_C Player where sound should be played near
+---@param volume float|number -- Sound volume
+---@param pitch float|number -- Sound pitch, default 1.0
+function Utils.PlaySoundAtPlayer(snd_path, player, vol, pitch)
     LoadAsync({ snd_path }, function()
         local gs = StaticFindObject("/Script/Engine.Default__GameplayStatics")
         local world = TheWorld
         local sound = StaticFindObject(snd_path)
+        if sound and Utils.IsValid(sound) and Utils.IsValid(player) then
+            local location = player:K2_GetActorLocation()
+            local rotation = {}
+            local start_at = 0.0       
+            gs:PlaySoundAtLocation(world, sound, location, rotation, vol, pitch, start_at, nil, nil, nil, nil)
+        end
+    end)
+end
+
+
+---Play Sound at Locating using GameplayStatics
+---@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
+---@param location table -- Location to play sound at
+---@param volume float|number -- Sound volume
+---@param pitch float|number -- Sound pitch, default 1.0
+function Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch)
+    LoadAsync({ snd_path }, function()
+        local gs = StaticFindObject("/Script/Engine.Default__GameplayStatics")
+        local world = TheWorld
+        local sound = StaticFindObject(snd_path)
+        local start_at = 0.0
         if sound and Utils.IsValid(sound) then            
-            gs:PlaySoundAtLocation(world, sound, location, rotation, vol, pitch, start_time, nil, nil, nil, nil)
+            gs:PlaySoundAtLocation(world, sound, location, rotation, volume, pitch, start_at, nil, nil, nil, nil)
         end
     end)
 end

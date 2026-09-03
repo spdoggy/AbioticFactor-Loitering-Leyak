@@ -37,20 +37,21 @@ Linux example:
 
 Features implemented so far:
 
-1. Movement Settings
-2. Viewed by Player Behavior Tweaks
-3. XRAY Settings
-4. Sensory Companion Trinket Settings
-5. Distance-to-Despawn
-6. Essence Settings
-7. Player Evasion Logic / Follow Across Loading/Area-Transition
-8. Drop Rate Settings for Leyak Essence
-9. Leyak invisible until XRAY'd
+01. Movement Settings
+02. Viewed by Player Behavior Tweaks
+03. XRAY Settings
+04. Sensory Companion Trinket Settings
+05. Distance-to-Despawn
+06. Essence Settings
+07. Player Evasion Logic / Follow Across Loading/Area-Transition
+08. Drop Rate Settings for Leyak Essence
+09. Leyak invisible until XRAY'd
+10. New behaviors can be gated until players reach a certain world event
 
 ## Future Improvement Ideas
 
-1. Leyak no-clip mode
-2. Teleport to player if lost
-3. Target Switch during active hunt
-4. Control DrainPerTick on the Hand-Held X-RAY Lamp
+01. Leyak no-clip mode
+02. Teleport to player if lost
+03. Target Switch during active hunt
+04. Control DrainPerTick on the Hand-Held X-RAY Lamp
 

@@ -6,12 +6,13 @@ local Utils = require("utils")
 --    a. Mode Idea: Distracted Leyak - the Leyak switch targets midway
 --    b. Teleport to player mode if it is > x meters away but less then the limit
 --    c. No-clip
+--    d. Let users define their own custom voice sounds for Leyak
 
 
 -- ============================================================
 -- CONFIG
 -- ============================================================
-Utils.log("--- BraverLeyak [BRVLYK] MOD LOADING ---\n")
+Utils.log("--- BraverLeyak [LLEYAK] MOD LOADING ---\n")
 local Config = require("../config")
 local ConfigAdmin = require("../config_admin")
 local ConfigLeyak = require("../config_leyak")
@@ -19,7 +20,7 @@ local ConfigLeyak = require("../config_leyak")
 -- ============================================================
 -- CONSTANTS
 -- ============================================================
-MOD_PREFIX = "[BRVLYK]"
+MOD_PREFIX = "[LLEYAK]"
 
 
 -- ============================================================
@@ -164,11 +165,11 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
     if max_key == 1 then
         if msg_fmt[1] == "HELP" or msg_fmt[1] == "help" then
             player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg,
-                "Enter brvlyk_help for list of commands",
+                "Enter lleyak_help for list of commands",
                 Enums.MsgColors.white, player_controller, false)
         end
 
-        if msg_fmt[1] == "brvlyk_help" then
+        if msg_fmt[1] == "LLEYAK_help" then
             local delay = 4000
             if steam_display_name == ConfigAdmin.admin_name then
                 player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg,
@@ -264,7 +265,25 @@ local function SetLeyakInvisible(override_xray_status)
     end
 end
 
-
+--- Check if new behavior modes for Leyak are gated behind story events
+--- Returns true at least one the required events in the 
+--- or true if the limit_behavior setting is turned off
+--- Otherwise false
+--- @return boolean
+local function WorldEventFlagsAllowLeyak()
+    if ConfigLeyak.leyak_limit_behavior_until_world_flags then
+        for k, v in pairs(ConfigLeyak.world_flags_required) do
+            --TODO: Remove debug
+            print(v)
+            if Utils.WorldHasEventOccurred(v) then
+                return true
+            end
+        end
+        return false
+    else
+        return true
+    end
+end
 
 local function LeyakCheckInvisibleSoundCue()
     local leyak_npc = GetValidLeyak()
@@ -318,7 +337,7 @@ local function LeyakCheckInvisibleSoundCue()
                 local rotation = {}
                 local vol = (1000/dist) + 0.7
                 local pitch = 1.0
-                local start_at = 1.0
+                local start_at = 0.0
                 Utils.PlaySoundAtLocation(snd_path, location, rotation, vol, pitch, start_at)
                 return false
             else
@@ -379,6 +398,17 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
         if ConfigLeyak.admin_messages_enabled then
             local msg = string.format("Leyak [leyak_xray_dismissal_time] = %.1f ", ConfigLeyak.leyak_xray_dismissal_time)
             Utils.AdminMessage(msg, MOD_PREFIX, Enums.MsgColors.blue, Enums.MsgColors.green)
+        end
+
+        -- Force it back to stock-Leyak if world does not meet required event flags
+        if not WorldEventFlagsAllowLeyak() then
+            ConfigLeyak.leyak_is_dismissed_by_looking = true
+            if ConfigLeyak.admin_messages_enabled then
+                msg = string.format("The Leyak is gated behind world event flags. Behave normal and follow %s (Leyak Default/Base Game Behavior)",
+                    leyak_target_name)
+                Utils.AdminMessage(msg, MOD_PREFIX, Enums.MsgColors.blue, Enums.MsgColors.green)
+            end
+            return
         end
 
         -- Handle Randomization
@@ -889,7 +919,6 @@ Utils.log("Braver Leyak Mod Loaded")
 
 
 -- Debug
-
 ToggleKey = Key.F6
 ToggleKeyModifiers = {}
 if ToggleKey then
@@ -907,11 +936,22 @@ if ToggleKey then
             --     leyak_npc.HasBeenXrayed = false -- Reset Stealth Capabilities
             -- end
 
-            local snd_path = "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
+            --local snd_path = "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
+            local snd_path = "/Game/Audio/Monsters/CM/s_cm_idle_03.s_cm_idle_03"
+            
             local admin_player = Utils.GetAdminPlayer()
-            --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
 
-          
+            -- local event_flags = Utils.GetWorldEventFlags()
+            -- print(event_flags)
+
+
+            if WorldEventFlagsAllowLeyak() then
+                
+                print("Leyak is Allowed Yay!")
+            end
+            --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
+            Utils.PlaySoundAtPlayer(snd_path, admin_player, 3, 1.4)
+
 
             print(snd_path)
             --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
@@ -924,4 +964,5 @@ if ToggleKey then
         ModDebugKey()
     end)
 end
+
 

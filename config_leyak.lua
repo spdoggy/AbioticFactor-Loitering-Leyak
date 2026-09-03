@@ -7,6 +7,15 @@ return {
     -- Nominal Leyak Cooldown (Seconds), Base Game Default is 900
     leyak_cooldown = 900,
 
+    -- Locks the new leyak behaviors until at least ONE of the events 
+    -- in the following list is true. The default setting for this list is to
+    -- gate the new Leyak modes behind the acquisition of the hand-held XRAY lamp.
+    leyak_limit_behavior_until_world_flags = true,
+    world_flags_required = {
+        "Labs_XRay_FixitAll",
+        "Security_Entered",
+    },
+    
     -- Randomizes choice between new Leyak behavior modes
     -- Setting this true will randomly override the following:
     --  1. leyak_is_dismissed_by_looking
