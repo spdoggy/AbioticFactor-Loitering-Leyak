@@ -141,7 +141,7 @@ won't always work! Current Valid Escape Conditions are:
 8. RANDOM!
 Randomizes choice between the new Leyak behavior modes! Keep the players guessing.
 
-Setting [leyak_is_behavior_randomized] true will randomly override the following:
+- Setting [leyak_is_behavior_randomized] true will randomly override the following:
 - ```leyak_is_dismissed_by_looking```
 - ```leyak_is_restricted_by_looking```
 - ```leyak_is_dismissed_by_sensory_companion_trinket```
