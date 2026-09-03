@@ -312,8 +312,7 @@ function Utils.LoadAssets(path, callback)
         local asset, found, loaded = LoadAsset(path)
         if found and loaded and Utils.IsValid(asset) then
             Utils.AssetCache[path] = asset
-
-            Utils.log("ASSETS loaded: " .. path)
+            -- Utils.log("ASSETS loaded: " .. path)
         else
             Utils.error("ASSETS failed to load: " .. path)
             Utils.AssetCache[path] = nil
@@ -419,7 +418,6 @@ function Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch, 
             local sound_off_delay = 1000 + math.floor(sound.Duration)
             
             ExecuteWithDelay(sound_off_delay, function()
-                print("sound_has_finished")
                 sound_has_finished = true
             end)
         end

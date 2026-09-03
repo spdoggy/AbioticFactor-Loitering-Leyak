@@ -12,7 +12,7 @@ local Utils = require("utils")
 -- ============================================================
 -- CONFIG
 -- ============================================================
-Utils.log("--- BraverLeyak [LLEYAK] MOD LOADING ---\n")
+Utils.log("--- Loitering Leyak [LLEYAK] MOD LOADING ---\n")
 local Config = require("../config")
 local ConfigAdmin = require("../config_admin")
 local ConfigLeyak = require("../config_leyak")
@@ -961,7 +961,7 @@ end
 PollForHooks()
 
 -- Completed
-Utils.log("Braver Leyak Mod Loaded")
+Utils.log("Loitering Leyak Mod Loaded")
 
 
 -- Debug
@@ -970,41 +970,7 @@ ToggleKeyModifiers = {}
 if ToggleKey then
     local function ModDebugKey()
         ExecuteInGameThread(function()
-            
-            local stateMessage = "BraveLeyak"
-            local leyak_npc = GetValidLeyak()
-            -- if Utils.IsValid(leyak_npc) then
-            --     local save_target = leyak_npc.TargetPlayer
-            --     leyak_npc.TargetPlayer = CreateInvalidObject()
-            --     leyak_npc:UpdateLeyakVisibility()
-            --     leyak_npc:UpdateLeyakVisibility()
-            --     leyak_npc.TargetPlayer = save_target
-            --     leyak_npc.HasBeenXrayed = false -- Reset Stealth Capabilities
-            -- end
-
-            --local snd_path = "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
-            local snd_path = "/Game/Audio/Monsters/CM/s_cm_idle_03.s_cm_idle_03"
-            
-            local admin_player = Utils.GetAdminPlayer()
-
-            -- local event_flags = Utils.GetWorldEventFlags()
-            -- print(event_flags)
-            print(ConfigLeyak.leyak_random_voice_time_between_sec)
-            local speak_delay = 1000 + math.floor(ConfigLeyak.leyak_random_voice_time_between_sec * 1000.0)
-
-            if WorldEventFlagsAllowLeyak() then
-                
-                print("Leyak is Allowed Yay!")
-            end
-            --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
-            
-            -- Utils.PlaySoundAtActor(snd_path, admin_player, 3, 1.3, true)
-            
-            --Utils.PlaySoundAtActorAndWait(snd_path, admin_player, 3, 1.4)
-
-            --print(snd_path)
-            --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
-         
+            -- Test Stuff Here
         end)
     end
 
