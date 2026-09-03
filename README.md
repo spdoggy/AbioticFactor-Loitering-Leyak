@@ -45,7 +45,7 @@ To use any of these text chat commands, the hosts/server-admin will need to modi
 that comes with this mod and add in their own display name (as it would appear in-game) and their SteamID/GameTag/etc.
 The mod uses name/id to differentiate from regular players sending messages over chat.
 
-Additionally, if [admin_messages_enabled] is true in the config_leyak.lua file the mod will send Leyak status messages back
+Additionally, if ```admin_messages_enabled``` is true in the ```config_leyak.lua``` file, the mod will send Leyak status messages back
 to the valid admin using the text chat box. i.e when a new Leyak is spawned, what behavior mode the Leyak is in, who it is stalking, etc.
 
 ### Chat Commands:
@@ -77,45 +77,43 @@ Features implemented so far:
 
 ### New Behavior Modes
 
-1. leyak_is_dismissed_by_looking 
+1. ```leyak_is_dismissed_by_looking```
 The default behavior, overrides all others
 
-2. leyak_is_restricted_by_looking
+2. ```leyak_is_restricted_by_looking```
 The Leyak does NOT disappear when being viewed by the target player!
-Depending on the {```leyak_is_restricted_move_speed_factor```} and related settings, the Leyak will 
-continue to advance forwards at the player. The leyak_is_restricted_move_speed_factor can be set to 0
+Depending on the ```leyak_is_restricted_move_speed_factor``` and related settings, the Leyak will 
+continue to advance forwards at the player. The ```leyak_is_restricted_move_speed_factor``` can be set to 0
 if desired to cause the Leyak to freeze in-place during this mode.
 
-3. leyak_is_dismissed_by_sensory_companion_trinket
+3. ```leyak_is_dismissed_by_sensory_companion_trinket```
 Gives the Sensory Companion trinket the ability to both stun and make the Leyak disappear.
 
-4. leyak_is_invisible
+4. ```leyak_is_invisible```
 Makes the Leyak invisible to ALL players, until hit with any X-RAY beam.
 The leyak will continue to give off sound cues to give the player hints at where it could be.
 
-5. Not Dismissed by XRAY / leyak_xray_dismissal_time
+5. Not Dismissed by XRAY / ```leyak_xray_dismissal_time```
 There are controls to prevent the Leyak from immediately de-spawning when hit by a hand-held XRAY lamp.
 These settings also control how long players must hit the Leyak with a hand-held XRAY lamp to dismiss her (or the trinket
 if that is enabled). Setting leyak_xray_dismissal_time above ~ 5000 or 6000 will mean that the hand-held XRAY lamp will
 (generally) completely drain it's battery before the Leyak would disappear.
 
-The XRAY dismissal time is randomized between a min/max value, see 
-leyak_xray_dismissal_time_min, leyak_xray_dismissal_time_max
-in the 
- = 500,
+The XRAY dismissal time is randomized between a min/max setting value, see 
+```leyak_xray_dismissal_time_min```, ```leyak_xray_dismissal_time_max``` in the ```config_leyak.lua``` file to control it.
 
-6. leyak_is_restricted_by_xray_duration
+6. ```leyak_is_restricted_by_xray_duration```
 The Leyak will be temporarily frozen in place by a hand-held XRAY lamp for [leyak_is_restricted_by_xray_duration] 
 seconds of time. Players will then have to make an escape of at least [DistanceDifferenceToDespawn] meters away to actually
 get rid of the Leyak or she will continue the hunt. Teammates can help keep the leyak under X-RAY while the target escapes.
 
-7. Evading Mechanics
+7. Player Evasion Mechanics
 The player must reach a safe distance now to safely escape the Leyak, or the hunt will restart. If the Leyak de-spawns or 
 gets stuck for any other reason, the hunt will also re-start. So just running across a loading screen to the next zone
-will not work!
+won't always work!
 
 Current Valid Escape Conditions are:
-- Player gets more than DistanceDifferenceToDespawn meters from the leyak
+- Player gets more than ```DistanceDifferenceToDespawn``` meters from the leyak
 - leyak_was_dismissed [HasBeenXrayed == true]
 - leyak entered combat state for a grab attack
 - Any despawn during the default behavior mode (i.e playing with normal settings and the leyak is dismissed by looking)
@@ -124,14 +122,12 @@ Current Valid Escape Conditions are:
 Randomizes choice between the new Leyak behavior modes! Keep the players guessing.
 
 Setting [leyak_is_behavior_randomized] true will randomly override the following:
-- leyak_is_dismissed_by_looking
-- leyak_is_restricted_by_looking
-- leyak_is_dismissed_by_sensory_companion_trinket
-- leyak_is_invisible
+- ```leyak_is_dismissed_by_looking```
+- ```leyak_is_restricted_by_looking```
+- ```leyak_is_dismissed_by_sensory_companion_trinket```
+- ```leyak_is_invisible```
 
-
-    -- See Randomization section below to configure chance of each mode
-    leyak_is_behavior_randomized = true,
+See Randomization section in ```config_leyak.lua``` to configure the percent chance of each mode.
 
 
 ## Future Improvement Ideas
