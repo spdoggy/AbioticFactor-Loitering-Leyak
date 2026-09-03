@@ -12,6 +12,7 @@ return {
     --  1. leyak_is_dismissed_by_looking
     --  2. leyak_is_restricted_by_looking
     --  3. leyak_is_dismissed_by_sensory_companion_trinket
+    --  4. leyak_is_invisible
     -- See Randomization section below to configure chance of each mode
     leyak_is_behavior_randomized = true,
 
@@ -33,8 +34,8 @@ return {
     -- especially when [leyak_xray_dismissal_time] is set high
     leyak_is_restricted_by_xray_duration = 200,
 
-    -- TODO: Not Yet Implemented
-    leyak_can_be_invisible = true,
+    -- Leyak will be invisible to the target player until hit by X-RAY
+    leyak_is_invisible = false,
 
     -- XRAY Dismissal Time.
     -- Controls how long the Leyak needs to be hit by a hand-held XRAY lamp to disappear
@@ -65,7 +66,7 @@ return {
     -- !Warning: Setting both tower and hlamp to 0 will block player progression in labs!
 
     -- Percent Chance to Drop Essence on hit by XRAY Tower
-    leyak_xray_essence_tower_drop_rate = 5,
+    leyak_xray_essence_tower_drop_rate = 25,
 
     -- Percent Chance to Drop Essence on hit by hand-held XRAY Lamp
     leyak_xray_essence_hlamp_drop_rate = 5,
@@ -97,6 +98,8 @@ return {
     leyak_random_restrict_on_look_chance = 50,
     -- Random % chance of Leyak being dismissed upon viewing
     leyak_random_is_dismissed_by_looking_chance = 10,
+    -- Random % chance of Leyak being invisible until X-RAY'd
+    leyak_random_is_invisible_chance = 10,
 
 
     -- ============================================================
@@ -125,6 +128,12 @@ return {
     leyak_stalking_walk = 1000,
     leyak_stalking_sprint = 300,
     leyak_stalking_speed_factor = 7,
+
+    -- Slows the Leyak when invisible and less than than [leyak_invisible_distance] away from player.
+    leyak_invisible_distance = 1000,
+    leyak_invisible_walk = 50,
+    leyak_invisible_sprint = 50,
+    leyak_invisible_speed_factor = 0.5,
 
 
     -- ============================================================

@@ -2,27 +2,11 @@ local Utils = require("utils")
 
 
 -- TODO:
--- 1. Leyak Mods
---    a. Look into an additional mode where Leyak is invisible until XRAY'd
---    b. Mode Idea: Distracted Leyak - the Leyak switch targets midway
---    c. Strongly Consider separating this to it's own folder as well
---    d. Prevent Leyak Despawn on look away as long as it is within the limit
---    e. Teleport to player mode if it is > x meters away but less then the limit
--- 2. Complete Night Throne/BlackFogWeather disable feature
--- -- a. Randomize teleport options (bottom of inkwell, jailcell)
--- -- b. Still kinda crashy (weather related?),
--- --    test it on the dedicated server before release day
--- -- c. Stretch goal: actually spawn reaper model
--- 3. Goggles of Seeing for Jackal
---    --     TArray<FBuffDebuffRowHandle> AAbiotic_Character_ParentBP_C.CurrentSetBonuses;   could be useful,
---    need to scan all current buffs
+-- 1. Other Leyak Mods
+--    a. Mode Idea: Distracted Leyak - the Leyak switch targets midway
+--    b. Teleport to player mode if it is > x meters away but less then the limit
+--    c. No-clip
 
-  -- Multiple Modes:
-    -- 1. Never stops on look anymore, need to run far enough away or use x-ray
-    -- 2. Stops on Look but doesn't despawn
-    -- 3. XRay Doesn't Dismiss, just stops and delays it for a bit
-    -- 4. Invisible?
-    -- 5. nOCLIP
 
 -- ============================================================
 -- CONFIG
@@ -31,9 +15,6 @@ Utils.log("--- BraverLeyak [BRVLYK] MOD LOADING ---\n")
 local Config = require("../config")
 local ConfigAdmin = require("../config_admin")
 local ConfigLeyak = require("../config_leyak")
-
-
-
 
 -- ============================================================
 -- CONSTANTS
@@ -57,6 +38,8 @@ local leyak_evaded_by_player = false
 local leyak_was_dismissed = false
 local leyak_caught_player = false
 local leyak_target_name = ""
+local leyak_is_invisible = false
+local leyak_sound_cue_started = false
 
 -- ============================================================
 -- INSTANCES
@@ -95,6 +78,17 @@ local function GetValidLeyakDir()
     else
         Leyak_DIR = Utils.GetLeyakAiDirector()
         return Leyak_DIR
+    end
+end
+
+--- Get the Leyak
+---@return ANPC_Leyak_C
+local function GetValidLeyak()
+    if Leyak_NPC and Utils.IsValid(Leyak_NPC) then
+        return Leyak_NPC
+    else
+        Leyak_NPC = Utils.GetLeyak()
+        return Leyak_NPC
     end
 end
 
@@ -204,6 +198,7 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
             end)
         end
     end
+    player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, "-----", Enums.MsgColors.white, player_controller, false)
 end
 
 --- Set the Leyak's Move Speed
@@ -228,17 +223,113 @@ end
 ---@return number
 local function CalcLeyakDistanceToPlayer()
     local dist = 0
-    if Leyak_NPC ~= nil then
-        Leyak_NPC.ViewedByTarget = false
-        leyak_target_name = Leyak_NPC.TargetPlayer.MyPlayerState:GetPlayerName():ToString()
-        local leyak_loc = Leyak_NPC:K2_GetActorLocation()
-        local player_loc = Leyak_NPC.TargetPlayer:K2_GetActorLocation()
+    local leyak_npc = GetValidLeyak()
+    if Utils.IsValid(leyak_npc) then
+        leyak_npc.ViewedByTarget = false
+        leyak_target_name = leyak_npc.TargetPlayer.MyPlayerState:GetPlayerName():ToString()
+        local leyak_loc = leyak_npc:K2_GetActorLocation()
+        local player_loc = leyak_npc.TargetPlayer:K2_GetActorLocation()
         local x_vector = (leyak_loc.X - player_loc.X) ^ 2
         local y_vector = (leyak_loc.Y - player_loc.Y) ^ 2
         local z_vector = (leyak_loc.Z - player_loc.Z) ^ 2
         dist = math.sqrt(x_vector + y_vector + z_vector)
     end
     return dist
+end
+
+---Set the Leyak Invisible by temporarily setting and invalid target,
+---then forcing a player visibility update.
+---@param override_xray_status boolean -- Ignore if Leyak was previously X-RAY'd
+local function SetLeyakInvisible(override_xray_status)
+    local leyak_npc = GetValidLeyak()
+    if Utils.IsValid(leyak_npc) then
+        override_xray_status = override_xray_status or false
+        if override_xray_status then
+            leyak_npc.HasBeenXrayed = false
+        elseif leyak_npc.HasBeenXrayed then
+            return
+        end
+
+        leyak_is_invisible = true
+        local playing = 0 ---@cast playing EAudioComponentPlayState
+        leyak_npc:StartedSpeaking(playing)
+        leyak_npc:UpdateBreathingAudio(playing)
+        leyak_npc:OnCharacterSpeakingStart()
+        local save_target = leyak_npc.TargetPlayer
+        leyak_npc.TargetPlayer = CreateInvalidObject()
+        leyak_npc:UpdateLeyakVisibility()
+        leyak_npc:UpdateLeyakVisibility()
+        leyak_npc.TargetPlayer = save_target
+
+    end
+end
+
+
+
+local function LeyakCheckInvisibleSoundCue()
+    local leyak_npc = GetValidLeyak()
+
+    print("LeyakCheckInvisibleSoundCue")
+    -- Limit to one loop instance per spawn
+    if leyak_sound_cue_started then
+        return
+    end
+    leyak_sound_cue_started = true
+    print("LeyakCheckInvisibleSoundCue")
+
+
+    print(leyak_npc)
+    print(leyak_is_invisible)
+    -- Check if Leyak is still invisible and not under and XRAY or evade conditions
+    if Utils.IsValid(leyak_npc) and leyak_is_invisible then
+
+        print("LoopAsync")
+        -- Play an idle every 1 second while conditions warrant it
+        LoopAsync(1500, function()
+            if leyak_was_xrayed then
+                return true
+            elseif leyak_was_xrayed_by_tower then
+                return true
+            elseif leyak_was_xrayed_by_lamp then
+                return true
+            elseif leyak_was_xrayed_by_trinket then
+                return true
+            elseif leyak_evaded_by_player then
+                return true
+            elseif leyak_was_dismissed then
+                return true
+            elseif leyak_caught_player then
+                return true
+            elseif not leyak_is_invisible then
+                return true
+            end
+            local leyak_npc = GetValidLeyak()
+
+            if Utils.IsValid(leyak_npc) then
+                if leyak_npc.HasBeenXrayed then
+                    return true
+                end
+                -- Otherwise give player a location sound cue
+                local idle_id = math.random(1, 18)
+                local snd_path = string.format("/Game/Audio/Monsters/Leyak/s_leyak_idle_%02d.s_leyak_idle_%02d", idle_id, idle_id)
+                -- Choose 01 to 18 idle noises..
+                local location = leyak_npc:K2_GetActorLocation()
+                local dist = CalcLeyakDistanceToPlayer()
+                local rotation = {}
+                local vol = (1000/dist) + 0.7
+                local pitch = 1.0
+                local start_at = 1.0
+                Utils.PlaySoundAtLocation(snd_path, location, rotation, vol, pitch, start_at)
+                return false
+            else
+                return true
+            end
+
+        end)
+
+    else
+        print("Not Valid")
+    end
 end
 
 
@@ -248,11 +339,15 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
     leyak_xray_struck_counter = 0
     leyak_xray_hold_counter = 0
     leyak_was_xrayed_by_tower = false
+    leyak_was_xrayed_by_lamp = false
     leyak_evaded_by_player = false
     leyak_was_dismissed = false
     leyak_caught_player = false
+    leyak_was_xrayed = false
     leyak_target_name = ""
     leyak_dropped_essence_check = false
+    leyak_sound_cue_started = false
+
     GetValidLeyakDir()
 
     ExecuteWithDelay(5000, function()
@@ -299,6 +394,13 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
             dice_roll = math.random()
             ConfigLeyak.leyak_is_dismissed_by_looking = (dice_roll <= (ConfigLeyak.leyak_random_is_dismissed_by_looking_chance / 100))
 
+            dice_roll = math.random()
+            ConfigLeyak.leyak_is_invisible = (dice_roll <= (ConfigLeyak.leyak_random_is_invisible_chance / 100))
+            if ConfigLeyak.leyak_is_invisible then
+                SetLeyakInvisible(true)
+                LeyakCheckInvisibleSoundCue()
+                leyak_sound_cue_started = true
+            end
 
             if ConfigLeyak.admin_messages_enabled then
                 if not ConfigLeyak.leyak_is_dismissed_by_sensory_companion_trinket then
@@ -307,6 +409,11 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
                 else
                     msg = "Leyak will be fooled by the sensory companion!"
                     Utils.AdminMessage(msg, MOD_PREFIX, Enums.MsgColors.blue, Enums.MsgColors.green)
+                end
+
+                if ConfigLeyak.leyak_is_invisible then
+                    msg = "Leyak is invisible to the player!"
+                    Utils.AdminMessage(msg, MOD_PREFIX, Enums.MsgColors.blue, Enums.MsgColors.red)
                 end
 
                 if ConfigLeyak.leyak_is_dismissed_by_looking then
@@ -372,7 +479,8 @@ local function Handle_TriggerViewedByTarget()
         return
     end
 
-    if Leyak_NPC ~= nil then
+    local leyak_npc = GetValidLeyak()
+    if Utils.IsValid(leyak_npc) then
         local dist = CalcLeyakDistanceToPlayer()
         if ConfigLeyak.log_distance_to_player then
             Utils.log("----------------------")
@@ -380,48 +488,52 @@ local function Handle_TriggerViewedByTarget()
         end
 
         if ConfigLeyak.leyak_is_dismissed_by_sensory_companion_trinket then
-            if doesPlayerHaveBuff(Leyak_NPC.TargetPlayer, Enums.Buffs.Buff_Leyak360) then
-                Leyak_NPC.HasBeenXrayed = true
+            if doesPlayerHaveBuff(leyak_npc.TargetPlayer, Enums.Buffs.Buff_Leyak360) then
+                leyak_npc.HasBeenXrayed = true
                 leyak_was_xrayed_by_trinket = true
+                leyak_is_invisible = false
             end
         end
 
         -- Prevent De-spawn
-        Leyak_NPC.ViewedByTarget = false
-        Leyak_NPC.DistanceDifferenceToDespawn = ConfigLeyak.DistanceDifferenceToDespawn
+        leyak_npc.ViewedByTarget = false
+        leyak_npc.DistanceDifferenceToDespawn = ConfigLeyak.DistanceDifferenceToDespawn
 
         -- Extend Reach to allow Leyak to damage even if being viewed
-        Leyak_NPC.DamageSphere.SphereRadius = 400
+        leyak_npc.DamageSphere.SphereRadius = 400
 
-        -- Dismiss if hit by stationary tower
+        -- Dismiss if hit by stationary X-RAY defense tower
         if leyak_was_xrayed_by_tower then
             leyak_xray_struck_counter = ConfigLeyak.leyak_xray_dismissal_time + 1
             leyak_was_dismissed = true
+            leyak_is_invisible = false
         end
 
         -- Prepare to Dismiss the Leyak if the Max XRAY Time is Exceeded
         -- Otherwise, set the Required Duration to the Max XRAY Time
         if leyak_xray_struck_counter > ConfigLeyak.leyak_xray_dismissal_time then
             SetLeyakMoveSpeed(0.01, 0.01, 0.01)
-            Leyak_NPC.RequiredMegalightDuration = 2
-            Leyak_NPC.HasBeenXrayed = true
-            Leyak_NPC.PrepareLeyakDespawn()
-            leyak_drop_essence(Leyak_NPC)
+            leyak_npc.RequiredMegalightDuration = 2
+            leyak_npc.HasBeenXrayed = true
+            leyak_is_invisible = false
+            leyak_npc.PrepareLeyakDespawn()
+            leyak_drop_essence(leyak_npc)
             leyak_xray_hold_counter = ConfigLeyak.leyak_is_restricted_by_xray_duration
             leyak_was_dismissed = true
             return
         elseif leyak_xray_struck_counter > ConfigLeyak.leyak_xray_essence_time then
-            leyak_drop_essence(Leyak_NPC)
+            leyak_drop_essence(leyak_npc)
         else
-            Leyak_NPC.RequiredMegalightDuration = ConfigLeyak.leyak_xray_dismissal_time
+            leyak_npc.RequiredMegalightDuration = ConfigLeyak.leyak_xray_dismissal_time
         end
 
 
-        if Leyak_NPC.HasBeenXrayed then
-            Leyak_NPC.PotentiallyStuck = false
-            Leyak_NPC.AbsolutelyStuck = false
+        if leyak_npc.HasBeenXrayed then
+            leyak_npc.PotentiallyStuck = false
+            leyak_npc.AbsolutelyStuck = false
             leyak_xray_struck_counter = leyak_xray_struck_counter + 1
-            Leyak_NPC.HasBeenXrayed = false
+            leyak_is_invisible = false
+            leyak_npc.HasBeenXrayed = false
             leyak_was_xrayed = true
             leyak_xray_hold_counter = ConfigLeyak.leyak_is_restricted_by_xray_duration
 
@@ -437,6 +549,15 @@ local function Handle_TriggerViewedByTarget()
             elseif ConfigLeyak.leyak_is_restricted_by_looking then
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_is_restricted_move_walk, ConfigLeyak.leyak_is_restricted_move_sprint,
                     ConfigLeyak.leyak_is_restricted_move_speed_factor)
+            elseif leyak_is_invisible and dist <= ConfigLeyak.leyak_invisible_distance then
+                SetLeyakMoveSpeed(ConfigLeyak.leyak_invisible_walk, ConfigLeyak.leyak_invisible_sprint,
+                    ConfigLeyak.leyak_invisible_speed_factor)
+                leyak_npc.HasBeenXrayed = true
+                local playing = 0 ---@cast playing EAudioComponentPlayState
+                leyak_npc:StartedSpeaking(playing)
+                leyak_npc:UpdateBreathingAudio(playing)
+                leyak_npc:OnCharacterSpeakingStart()
+                leyak_npc.HasBeenXrayed = false
             else
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_nearby_walk, ConfigLeyak.leyak_nearby_sprint,
                     ConfigLeyak.leyak_nearby_speed_factor)
@@ -455,6 +576,15 @@ local function Handle_TriggerViewedByTarget()
             elseif ConfigLeyak.leyak_is_restricted_by_looking then
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_is_restricted_move_walk, ConfigLeyak.leyak_is_restricted_move_sprint,
                     ConfigLeyak.leyak_is_restricted_move_speed_factor)
+            elseif leyak_is_invisible and dist <= ConfigLeyak.leyak_invisible_distance then
+                SetLeyakMoveSpeed(ConfigLeyak.leyak_invisible_walk, ConfigLeyak.leyak_invisible_sprint,
+                    ConfigLeyak.leyak_invisible_speed_factor)
+                leyak_npc.HasBeenXrayed = true
+                local playing = 0 ---@cast playing EAudioComponentPlayState
+                leyak_npc:StartedSpeaking(playing)
+                leyak_npc:UpdateBreathingAudio(playing)
+                leyak_npc:OnCharacterSpeakingStart()
+                leyak_npc.HasBeenXrayed = false
             else
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_nearby_walk, ConfigLeyak.leyak_nearby_sprint,
                     ConfigLeyak.leyak_nearby_speed_factor)
@@ -483,7 +613,7 @@ local function Handle_SetLeyakOnCooldown(context, CooldownReductionMultiplier)
             false)
     else
         -- Player Failure
-        -- The system despawned because of the stuck timer, area transition/load, or other internal logic
+        -- The system de-spawned the Leyak because of the stuck timer, area transition/load, or other internal logic
         -- Reduce the Leyak Cooldown to force another chase immediately
         msg = string.format("%s failed evading the Leyak", leyak_target_name)
         admin_player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, msg, Enums.MsgColors.red,
@@ -494,16 +624,17 @@ local function Handle_SetLeyakOnCooldown(context, CooldownReductionMultiplier)
 end
 
 local function Handle_TriggerTargetLookedAway()
-    if Leyak_NPC ~= nil then
-        Leyak_NPC.ViewedByTarget = false
+    local leyak_npc = GetValidLeyak()
+    if Utils.IsValid(leyak_npc) then
+        leyak_npc.ViewedByTarget = false
 
         dist = CalcLeyakDistanceToPlayer()
         if ConfigLeyak.log_distance_to_player then
             Utils.log("----------------------")
             Utils.log("Looked Away--Dist to Leyak:" .. dist)
         end
-        Leyak_NPC.PotentiallyStuck = false
-        Leyak_NPC.AbsolutelyStuck = false
+        leyak_npc.PotentiallyStuck = false
+        leyak_npc.AbsolutelyStuck = false
 
         -- If Player has successfully evaded, force despawn
         if dist > ConfigLeyak.DistanceDifferenceToDespawn then
@@ -512,10 +643,10 @@ local function Handle_TriggerTargetLookedAway()
             end
             leyak_evaded_by_player = true
             SetLeyakMoveSpeed(0.01, 0.01, 0.01)
-            Leyak_NPC.RequiredMegalightDuration = 2
-            Leyak_NPC.HasBeenXrayed = true
-            Leyak_NPC.ViewedByTarget = true
-            Leyak_NPC.PrepareLeyakDespawn()
+            leyak_npc.RequiredMegalightDuration = 2
+            leyak_npc.HasBeenXrayed = true
+            leyak_npc.ViewedByTarget = true
+            leyak_npc.PrepareLeyakDespawn()
             return
         end
 
@@ -525,6 +656,15 @@ local function Handle_TriggerTargetLookedAway()
             if dist > ConfigLeyak.leyak_stalking_distance then
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_stalking_walk, ConfigLeyak.leyak_stalking_sprint,
                     ConfigLeyak.leyak_stalking_speed_factor)
+            elseif leyak_is_invisible and dist <= ConfigLeyak.leyak_invisible_distance then
+                SetLeyakMoveSpeed(ConfigLeyak.leyak_invisible_walk, ConfigLeyak.leyak_invisible_sprint,
+                    ConfigLeyak.leyak_invisible_speed_factor)
+                leyak_npc.HasBeenXrayed = true
+                local playing = 0 ---@cast playing EAudioComponentPlayState
+                leyak_npc:StartedSpeaking(playing)
+                leyak_npc:UpdateBreathingAudio(playing)
+                leyak_npc:OnCharacterSpeakingStart()
+                leyak_npc.HasBeenXrayed = false
             else
                 SetLeyakMoveSpeed(ConfigLeyak.leyak_nearby_walk, ConfigLeyak.leyak_nearby_sprint,
                     ConfigLeyak.leyak_nearby_speed_factor)
@@ -543,12 +683,16 @@ local function Handle_OnMegalightHit(context, megalight, Tier)
         leyak_was_dismissed = true
         leyak_xray_struck_counter = ConfigLeyak.leyak_xray_dismissal_time + 1
         SetLeyakMoveSpeed(0.01, 0.01, 0.01)
-        Leyak_NPC.RequiredMegalightDuration = 2
-        Leyak_NPC.HasBeenXrayed = true
-        -- Force Despawn and Handle Drop now, otherwise
-        -- normal X-RAY logic will always drop essence
-        Leyak_NPC.PrepareLeyakDespawn()
-        leyak_drop_essence(Leyak_NPC)
+        local leyak_npc = GetValidLeyak()
+        if Utils.IsValid(leyak_npc) then
+            leyak_npc.RequiredMegalightDuration = 2
+            leyak_npc.HasBeenXrayed = true
+            leyak_is_invisible = false
+            -- Force Despawn and Handle Drop now, otherwise
+            -- normal X-RAY logic will always drop essence
+            leyak_npc.PrepareLeyakDespawn()
+            leyak_drop_essence(leyak_npc)
+        end
         leyak_xray_hold_counter = ConfigLeyak.leyak_is_restricted_by_xray_duration
     else -- Item_LightSource_Megalight_C_2147408010.MegalightComponent
         leyak_was_xrayed_by_tower = false
@@ -742,3 +886,42 @@ PollForHooks()
 
 -- Completed
 Utils.log("Braver Leyak Mod Loaded")
+
+
+-- Debug
+
+ToggleKey = Key.F6
+ToggleKeyModifiers = {}
+if ToggleKey then
+    local function ModDebugKey()
+        ExecuteInGameThread(function()
+            
+            local stateMessage = "BraveLeyak"
+            local leyak_npc = GetValidLeyak()
+            -- if Utils.IsValid(leyak_npc) then
+            --     local save_target = leyak_npc.TargetPlayer
+            --     leyak_npc.TargetPlayer = CreateInvalidObject()
+            --     leyak_npc:UpdateLeyakVisibility()
+            --     leyak_npc:UpdateLeyakVisibility()
+            --     leyak_npc.TargetPlayer = save_target
+            --     leyak_npc.HasBeenXrayed = false -- Reset Stealth Capabilities
+            -- end
+
+            local snd_path = "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
+            local admin_player = Utils.GetAdminPlayer()
+            --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
+
+          
+
+            print(snd_path)
+            --Utils.PlaySFX(snd_path, admin_player, 1, 100, 1000)
+         
+        end)
+    end
+
+
+    RegisterKeyBind(ToggleKey, ToggleKeyModifiers, function()
+        ModDebugKey()
+    end)
+end
+
