@@ -9,7 +9,7 @@ See the /config_leyak.lua file for a full explanation of each new setting.
 This mod is intended to be installed by the Host Player or on a Dedicated Server install running UE4SS.
 Note that I have not tested cross-play functionality, but I hope it will work for all players.
 
-https://www.nexusmods.com/games/abioticfactor/mods/######/
+https://www.nexusmods.com/abioticfactor/mods/305
 
 
 ## Requirements
