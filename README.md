@@ -51,15 +51,30 @@ to the valid admin using the text chat box. i.e when a new Leyak is spawned, wha
 ### Chat Commands:
 
 ```
+-----
 help                   - Remind the user about the "lleyak_help" command
+-----
 lleyak_help            - Print a list of text commands for this mod to the in-game chat box
+-----
 ToggleLeyakVoice       - Toggle Leyak Random Voice On/Off
+-----
 tlv                    - Toggle Leyak Random Voice On/Off (shorthand)
-SetLeyakCooldown #     - Override the default Leyak cooldown to the new number specified, i.e SetLeyakCooldown 30 to set it to 30 secs
-slc #                  - Shorthand command for SetLeyakCooldown, i.e slc 400 to set Leyak default cooldown to 400 secs
-glc                    - Shorthand command for displaying the current Leyak cooldown setting. Prints the current value to the chat.
-players_are_too_scared - Disables most of this mod's features and returns the Leyak to base-game functionality
-players_are_not_scared_enough - Un-does the "players_are_too_scared", and sets Leyak behavior to randomized
+-----
+SetLeyakCooldown #     - Override the default Leyak cooldown to the new number specified, 
+                         i.e SetLeyakCooldown 30 to set it to 30 secs
+-----
+slc #                  - Shorthand command for SetLeyakCooldown, 
+                         i.e slc 400 to set Leyak default cooldown to 400 secs
+-----
+glc                    - Shorthand command for displaying the current Leyak cooldown setting.
+                         Prints the current value to the chat.
+-----
+players_are_too_scared - Disables most of this mod's features and returns
+                         the Leyak to base-game functionality
+-----
+players_are_not_scared_enough - Un-does the "players_are_too_scared",
+                         and sets Leyak behavior to randomized
+-----
 ```
 
 
