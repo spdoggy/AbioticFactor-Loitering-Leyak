@@ -107,11 +107,7 @@ if desired to cause the Leyak to freeze in-place during this mode.
 3. ```leyak_is_dismissed_by_sensory_companion_trinket```
 Gives the Sensory Companion trinket the ability to both stun and make the Leyak disappear.
 
-4. ```leyak_is_invisible```
-Makes the Leyak invisible to ALL players, until hit with any X-RAY beam.
-The leyak will continue to give off sound cues to give the player hints at where it could be.
-
-5. Not Dismissed by XRAY / ```leyak_xray_dismissal_time```
+4. Not Dismissed by XRAY / ```leyak_xray_dismissal_time```
 There are controls to prevent the Leyak from immediately de-spawning when hit by a hand-held XRAY lamp.
 These settings also control how long players must hit the Leyak with a hand-held XRAY lamp to dismiss her (or the trinket
 if that is enabled). Setting leyak_xray_dismissal_time above ~ 5000 or 6000 will mean that the hand-held XRAY lamp will
@@ -121,12 +117,12 @@ The base defense Tower Defense X-RAY turret will always still immediately make t
 The XRAY dismissal time is randomized between a min/max setting value, see 
 ```leyak_xray_dismissal_time_min```, ```leyak_xray_dismissal_time_max``` in the ```config_leyak.lua``` file to control it.
 
-6. ```leyak_is_restricted_by_xray_duration```
+5. ```leyak_is_restricted_by_xray_duration```
 The Leyak will be temporarily frozen in place by a hand-held XRAY lamp for [leyak_is_restricted_by_xray_duration] 
 seconds of time. Players will then have to make an escape of at least [DistanceDifferenceToDespawn] meters away to actually
 get rid of the Leyak or she will continue the hunt. Teammates can help keep the leyak under X-RAY while the target escapes.
 
-7. Player Evasion Mechanics
+6. Player Evasion Mechanics
 The player must reach a safe distance now to safely escape the Leyak, or the hunt will restart. If the Leyak de-spawns or 
 gets stuck for any other reason, the hunt will also re-start. So just running across a loading screen to the next zone
 won't always work! Current Valid Escape Conditions are:
@@ -137,7 +133,7 @@ won't always work! Current Valid Escape Conditions are:
 - Any despawn during the default behavior mode (i.e playing with normal settings and the leyak is dismissed by looking)
 ```
 
-8. RANDOM!
+7. RANDOM!
 Randomizes choice between the new Leyak behavior modes! Keep the players guessing.
 
 - Setting ```leyak_is_behavior_randomized``` true will randomly override the following:
@@ -152,9 +148,14 @@ Randomizes choice between the new Leyak behavior modes! Keep the players guessin
 ## Future Improvement Ideas
 
 01. Leyak no-clip mode -- Early effort made the Leyak emerge out of the floor under the players feet in some cases!
-01. Leyak invisible until XRAY'd -- works on single player, but not on remote sadly..
-03. Teleport to player if lost
-04. Target Switch to another player during active hunt
-05. Control DrainPerTick on the Hand-Held X-RAY Lamp
-06. A mechanic to let players temporarily obtain the "Buff_LeyakSafetyZone"
-07. Override ItemDropWhenBanished randomly
+02. Teleport to player if lost
+03. Target Switch to another player during active hunt
+04. Control DrainPerTick on the Hand-Held X-RAY Lamp
+05. A mechanic to let players temporarily obtain the "Buff_LeyakSafetyZone"
+06. Override ItemDropWhenBanished randomly
+07. Leyak invisible until XRAY'd -- works on single player, but not on remote sadly..
+
+```leyak_is_invisible```
+Would have made the Leyak invisible to ALL players, until hit with any X-RAY beam.
+The leyak would have continued to give off sound cues to give the player hints at where it could be.
+Not sure this will be possible to do at all using only a server-side mod.

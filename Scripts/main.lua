@@ -279,15 +279,13 @@ local function SetLeyakInvisible(override_xray_status)
         leyak_npc:StartedSpeaking(playing)
         leyak_npc:UpdateBreathingAudio(playing)
         leyak_npc:OnCharacterSpeakingStart()
-        leyak_npc.bHidden = true
-        --local save_target = leyak_npc.TargetPlayer
-        --local fake_target
-        --local faked_target = StaticConstructObject(ConsoleClass, GameViewport, 0, 0, 0, nil, false, false, nil)
-
-        --leyak_npc.TargetPlayer = fake_target
-        --leyak_npc:UpdateLeyakVisibility()
-        --leyak_npc:UpdateLeyakVisibility()
-        --leyak_npc.TargetPlayer = save_target
+        --leyak_npc.bHidden = true
+        -- BUG REPORT: Only works in single-player
+        local save_target = leyak_npc.TargetPlayer
+        leyak_npc.TargetPlayer = CreateInvalidObject()
+        leyak_npc:UpdateLeyakVisibility()
+        leyak_npc:UpdateLeyakVisibility()
+        leyak_npc.TargetPlayer = save_target
 
     end
 end

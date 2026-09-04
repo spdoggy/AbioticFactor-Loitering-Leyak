@@ -44,6 +44,8 @@ return {
     leyak_is_restricted_by_xray_duration = 200,
 
     -- Leyak will be invisible to the target player until hit by X-RAY
+    -- BUG REPORT: Invisibility currently only works for single-player,
+    -- i.e does not work on dedicated servers or for non-host players
     leyak_is_invisible = false,
 
     -- XRAY Dismissal Time.
@@ -108,7 +110,9 @@ return {
     -- Random % chance of Leyak being dismissed upon viewing
     leyak_random_is_dismissed_by_looking_chance = 10,
     -- Random % chance of Leyak being invisible until X-RAY'd
-    leyak_random_is_invisible_chance = 10,
+    -- BUG REPORT: Invisibility currently only works for single-player,
+    -- i.e does not work on dedicated servers or for non-host players
+    leyak_random_is_invisible_chance = 1,
 
 
     -- ============================================================
@@ -176,6 +180,7 @@ return {
     -- Voice Line List
     -- Example: Play a Coworker Voice line at 1.3 x NormalPitch        
     --  {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_01.s_cm_idle_01"},
+    -- BUG REPORT: Pitch Setting does not work on dedicated server or non-host players
     --
     leyak_random_voice_lines = {
         {pitch = 1.3, path = "/Game/Audio/Monsters/CM/s_cm_idle_01.s_cm_idle_01"},
@@ -235,7 +240,7 @@ return {
     -- Debug Settings
     -- ============================================================
     admin_messages_enabled = true,
-    log_distance_to_player = false,
+    log_distance_to_player = true,
 
 
 }
