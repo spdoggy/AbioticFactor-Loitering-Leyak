@@ -90,8 +90,7 @@ Features implemented so far:
 06. Essence Settings
 07. Player Evasion Logic / Follow Across Loading/Area-Transition
 08. Drop Rate Settings for Leyak Essence
-09. Leyak invisible until XRAY'd
-10. New behaviors can be gated until players reach a certain world event
+09. New behaviors can be gated until players reach a certain world event
 
 
 ### New Behavior Modes
@@ -152,8 +151,10 @@ Randomizes choice between the new Leyak behavior modes! Keep the players guessin
 
 ## Future Improvement Ideas
 
-01. Leyak no-clip mode (TBD: This made the Leyak emerge out of the floor under the players feet in some cases!)
-02. Teleport to player if lost
-03. Target Switch to another player during active hunt
-04. Control DrainPerTick on the Hand-Held X-RAY Lamp
-05. A mechanic to let players temporarily obtain the "Buff_LeyakSafetyZone"
+01. Leyak no-clip mode -- Early effort made the Leyak emerge out of the floor under the players feet in some cases!
+01. Leyak invisible until XRAY'd -- works on single player, but not on remote sadly..
+03. Teleport to player if lost
+04. Target Switch to another player during active hunt
+05. Control DrainPerTick on the Hand-Held X-RAY Lamp
+06. A mechanic to let players temporarily obtain the "Buff_LeyakSafetyZone"
+07. Override ItemDropWhenBanished randomly

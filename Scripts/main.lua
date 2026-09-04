@@ -279,11 +279,15 @@ local function SetLeyakInvisible(override_xray_status)
         leyak_npc:StartedSpeaking(playing)
         leyak_npc:UpdateBreathingAudio(playing)
         leyak_npc:OnCharacterSpeakingStart()
-        local save_target = leyak_npc.TargetPlayer
-        leyak_npc.TargetPlayer = CreateInvalidObject()
-        leyak_npc:UpdateLeyakVisibility()
-        leyak_npc:UpdateLeyakVisibility()
-        leyak_npc.TargetPlayer = save_target
+        leyak_npc.bHidden = true
+        --local save_target = leyak_npc.TargetPlayer
+        --local fake_target
+        --local faked_target = StaticConstructObject(ConsoleClass, GameViewport, 0, 0, 0, nil, false, false, nil)
+
+        --leyak_npc.TargetPlayer = fake_target
+        --leyak_npc:UpdateLeyakVisibility()
+        --leyak_npc:UpdateLeyakVisibility()
+        --leyak_npc.TargetPlayer = save_target
 
     end
 end
@@ -376,7 +380,9 @@ local function LeyakCheckInvisibleSoundCue()
                 local vol = (1000/dist) + 0.7
                 local pitch = 1.0
                 local start_at = 0.0
-                Utils.PlaySoundAtLocation(snd_path, location, rotation, vol, pitch, start_at)
+                --Utils.PlaySoundAtLocation(snd_path, location, rotation, vol, pitch, start_at)
+                Utils.Broadcast_PlaySoundAtLocation(snd_path, location, vol, pitch)
+                
                 return false
             else
                 return true
