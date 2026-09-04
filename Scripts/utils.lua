@@ -424,6 +424,35 @@ function Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch, 
     end)
 end
 
+-- void Broadcast_PlaySoundAtLocation(class USoundBase* Sound, FVector Location, bool LoudAmbientSound);
+-- This will work on dedicate servers
+function Utils.Broadcast_PlaySoundAtLocation(snd_path, location, volume, pitch, wait)
+    LoadAsync({ snd_path }, function()
+        
+        local world = TheWorld
+        local game_state = TheWorld.GameState
+        local sound = StaticFindObject(snd_path)
+        local wait = wait or false
+
+        -- Return if not accepting and prev sound has not finished
+        if wait and not sound_has_finished then
+            return
+        end
+        if sound and Utils.IsValid(sound) and Utils.IsValid(TheWorld) then
+            sound.Volume = volume -- Won't work on dedicated servers
+            sound.Pitch = pitch
+            sound_has_finished = false
+            local loud = true
+            game_state:Broadcast_PlaySoundAtLocation(sound, location, loud)
+            local sound_off_delay = 1000 + math.floor(sound.Duration * 1000)
+
+            ExecuteWithDelay(sound_off_delay, function()
+                sound_has_finished = true
+            end)
+        end
+    end)
+end
+
 
 ---Play Sound at Player or Actor using GameplayStatics
 ---@param snd_path string -- Path to the sound, i.e "/Game/Audio/Monsters/Leyak/s_leyak_breathing.s_leyak_breathing"
@@ -436,7 +465,8 @@ function Utils.PlaySoundAtActor(snd_path, player_or_actor, volume, pitch, wait)
         local location = player_or_actor:K2_GetActorLocation()
         local rotation = {}
         local wait = wait or false
-        Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch, wait)
+        --Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch, wait)
+        Utils.Broadcast_PlaySoundAtLocation(snd_path, location, volume, pitch, wait)
     end
 end
 
@@ -450,6 +480,38 @@ end
 function Utils.PlaySoundAtPlayer(snd_path, player_or_actor, volume, pitch, wait)
     local wait = wait or false
     Utils.PlaySoundAtActor(snd_path, player_or_actor, volume, pitch, wait)
+end
+
+
+
+
+-------------------
+
+-- void Broadcast_Play3DSoundEffect(class USoundBase* Sound, bool Attached, FVector UnattachedLocation, bool PlayForLocalPlayer);
+
+function Utils.Broadcast_Play3DSoundEffect(snd_path, player, location, wait)
+    LoadAsync({ snd_path }, function()
+        local gs = StaticFindObject("/Script/Engine.Default__GameplayStatics")
+        local world = TheWorld
+        local sound = StaticFindObject(snd_path)
+        local start_at = 0.0
+        local wait = wait or false
+
+        -- Return if not accepting and prev sound has not finished
+        if wait and not sound_has_finished then
+            return
+        end
+        if sound and Utils.IsValid(sound) and player and Utils.IsValid(player) then
+            
+            sound_has_finished = false
+            player:Broadcast_Play3DSoundEffect(sound, false, location, true)
+            local sound_off_delay = 1000 + math.floor(sound.Duration * 1000)
+            
+            ExecuteWithDelay(sound_off_delay, function()
+                sound_has_finished = true
+            end)
+        end
+    end)
 end
 
 
