@@ -1,6 +1,6 @@
 return {
     -- Specify the Server Admin's Name Here
     -- For use with chat commands
-    admin_name = "SpDoggy",
-    admin_id = "76561197990919352",
+    admin_name = "YourDisplayNameHere",
+    admin_id = "0131234YourSteamIDHere",
 }
