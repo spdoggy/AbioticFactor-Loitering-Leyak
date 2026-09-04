@@ -415,7 +415,7 @@ function Utils.PlaySoundAtLocation(snd_path, location, rotation, volume, pitch, 
             
             sound_has_finished = false
             gs:PlaySoundAtLocation(world, sound, location, rotation, volume, pitch, start_at, nil, nil, nil, nil)
-            local sound_off_delay = 1000 + math.floor(sound.Duration)
+            local sound_off_delay = 1000 + math.floor(sound.Duration * 1000)
             
             ExecuteWithDelay(sound_off_delay, function()
                 sound_has_finished = true
