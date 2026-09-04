@@ -449,7 +449,7 @@ end
 ---@param wait boolean -- Wait for the sound to complete before accepting new sounds
 function Utils.PlaySoundAtPlayer(snd_path, player_or_actor, volume, pitch, wait)
     local wait = wait or false
-    Utils.PlaySoundAtActor(snd_path, player_or_actor, volume, pitch)
+    Utils.PlaySoundAtActor(snd_path, player_or_actor, volume, pitch, wait)
 end
 
 
