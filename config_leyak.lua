@@ -83,7 +83,7 @@ return {
     leyak_xray_essence_hlamp_drop_rate = 5,
 
     -- Percent Chance to Drop Essence when stunned by Sensory Companion Trinket
-    leyak_xray_essence_trnkt_drop_rate = 5,
+    leyak_xray_essence_trnkt_drop_rate = 0,
 
     -- Distance the player must run to escape the Leyak
     -- If the leyak de-spawns/is-stuck for any reason then 
@@ -113,6 +113,8 @@ return {
     -- BUG REPORT: Invisibility currently only works for single-player,
     -- i.e does not work on dedicated servers or for non-host players
     leyak_random_is_invisible_chance = 1,
+    -- Random % chance for Leyak to break from Containment
+    leyak_random_containment_break_chance = 50,
 
 
     -- ============================================================
@@ -153,7 +155,7 @@ return {
     -- Silly Stuff
     -- ============================================================
     -- Enable or Disable random voices
-    leyak_use_random_voice = true,
+    leyak_use_random_voice = false,
 
     -- Leyak can still randomly speak dialog while using the new invisibility mode
     leyak_use_random_voice_while_invisible = true,
@@ -240,7 +242,7 @@ return {
     -- Debug Settings
     -- ============================================================
     admin_messages_enabled = true,
-    log_distance_to_player = true,
+    log_distance_to_player = false,
 
 
 }
