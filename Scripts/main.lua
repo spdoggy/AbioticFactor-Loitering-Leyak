@@ -222,7 +222,6 @@ local function Handle_Request_SendTextChatMessage(Context, MessageToSend)
             end)
         end
     end
-    player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, "-----", Enums.MsgColors.white, player_controller, false)
 end
 
 --- Set the Leyak's Move Speed
