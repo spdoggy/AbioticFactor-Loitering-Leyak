@@ -591,7 +591,8 @@ local function Handle_TriggerViewedByTarget()
             leyak_npc.RequiredMegalightDuration = 2
             leyak_npc.HasBeenXrayed = true
             leyak_is_invisible = false
-            leyak_npc.PrepareLeyakDespawn()
+            leyak_npc:TryTrapLeyakInContainment()
+            leyak_npc:PrepareLeyakDespawn()
             leyak_drop_essence(leyak_npc)
             leyak_xray_hold_counter = ConfigLeyak.leyak_is_restricted_by_xray_duration
             leyak_was_dismissed = true
@@ -711,7 +712,7 @@ local function Handle_TriggerTargetLookedAway()
             Utils.log("Looked Away--Dist to Leyak:" .. dist)
         end
         leyak_npc.PotentiallyStuck = false
-        leyak_npc.AbsolutelyStuck = false
+        --leyak_npc.AbsolutelyStuck = false
 
         -- If Player has successfully evaded, force despawn
         if dist > ConfigLeyak.DistanceDifferenceToDespawn then
@@ -723,6 +724,7 @@ local function Handle_TriggerTargetLookedAway()
             leyak_npc.RequiredMegalightDuration = 2
             leyak_npc.HasBeenXrayed = true
             leyak_npc.ViewedByTarget = true
+            leyak_npc:TryTrapLeyakInContainment()
             leyak_npc.PrepareLeyakDespawn()
             return
         end
@@ -770,6 +772,7 @@ local function Handle_OnMegalightHit(context, megalight, Tier)
             leyak_is_invisible = false
             -- Force Despawn and Handle Drop now, otherwise
             -- normal X-RAY logic will always drop essence
+            leyak_npc:TryTrapLeyakInContainment()
             leyak_npc.PrepareLeyakDespawn()
             leyak_drop_essence(leyak_npc)
         end
@@ -781,7 +784,70 @@ local function Handle_OnMegalightHit(context, megalight, Tier)
     end
 end
 
+-- Notify on new Day, used to check for containment break event
+local function Handle_OnRep_CurrentDay()
+    local dice_roll = math.random()
+    if dice_roll <= (ConfigLeyak.leyak_random_containment_break_chance/100) then
+        Utils.AllClientDisplayWarningMessage("The air feels strange...", Enums.ClientWarnMessageColors.Red, false)
 
+        local containment_instances = FindAllOf("Deployed_LeyakContainment_C")
+        if not containment_instances then
+            print("No instances of 'Deployed_LeyakContainment_C' were found\\n")
+        else
+            for Index, container in pairs(containment_instances) do
+                if container.ContainsLeyak:ToString() == "Leyak" then
+                    local delay = 0
+                    local delay_inc = 500
+
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:NewDayUpdate()
+                    end)
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:NewDayUpdate()
+                    end)
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:NewDayUpdate()
+                    end)
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:NewDayUpdate()
+                    end)
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:NewDayUpdate()
+                    end)
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:NewDayUpdate()
+                    end)
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:NewDayUpdate()
+                        Utils.AllClientDisplayWarningMessage("The Leyak is breaking containment!", Enums.ClientWarnMessageColors.Red, false)
+                        Utils.PlaySoundAtAllPlayers("/Game/Audio/Environment/Anomalies/s_nightorb_break.s_nightorb_break", 2, 1, true)
+                    end)
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:NewDayUpdate()
+                    end)
+                    delay = delay + delay_inc
+                    ExecuteWithDelay(delay, function()
+                        container:Server_TryReleaseLeyak()
+                    end)
+                    ExecuteWithDelay(1300, function()
+                        Utils.PlaySoundAtAllPlayers("/Game/Audio/Environment/Alarms/s_alarm_heavy.s_alarm_heavy", 2, 1, false)
+                    end)
+                    ExecuteWithDelay(7500, function()
+                        Utils.PlaySoundAtAllPlayers("/Game/Audio/Environment/Alarms/s_alarm_heavy.s_alarm_heavy", 2, 1, false)
+                    end)
+                end
+            end
+        end
+    end
+end
 
 -- ============================================================
 -- HOOKS
@@ -859,6 +925,18 @@ local function SetupOnGameStateHooks()
             Utils.error(string.format("Hook registration failed: %s", tostring(errHook)))
         else
             Utils.log("Hook registration success: Handle_SetLeyakOnCooldown")
+        end
+    end)
+
+    ExecuteWithDelay(2500, function()
+        local okHook, errHook = pcall(RegisterHook,
+            "/Game/Blueprints/Environment/Systems/DayNightManager.DayNightManager_C:OnRep_CurrentDay",
+            Handle_OnRep_CurrentDay
+        )
+        if not okHook then
+            Utils.error(string.format("Hook registration failed: %s", tostring(errHook)))
+        else
+            Utils.log("Hook registration success: Handle_OnRep_CurrentDay")
         end
     end)
 
@@ -977,7 +1055,6 @@ if ToggleKey then
             -- Test Stuff Here
         end)
     end
-
 
     RegisterKeyBind(ToggleKey, ToggleKeyModifiers, function()
         ModDebugKey()
