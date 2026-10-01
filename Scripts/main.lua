@@ -837,12 +837,16 @@ local function Handle_OnRep_CurrentDay()
                     ExecuteWithDelay(delay, function()
                         container:Server_TryReleaseLeyak()
                     end)
-                    ExecuteWithDelay(1300, function()
-                        Utils.PlaySoundAtAllPlayers("/Game/Audio/Environment/Alarms/s_alarm_heavy.s_alarm_heavy", 2, 1, false)
-                    end)
-                    ExecuteWithDelay(7500, function()
-                        Utils.PlaySoundAtAllPlayers("/Game/Audio/Environment/Alarms/s_alarm_heavy.s_alarm_heavy", 2, 1, false)
-                    end)
+
+                    -- [TODO]: Need to handle stopping for looping sounds on dedicated server
+                    -- bLooping is client side!
+
+                    -- ExecuteWithDelay(1300, function()
+                    --     Utils.PlaySoundAtAllPlayers("/Game/Audio/Environment/Alarms/s_alarm_heavy.s_alarm_heavy", 2, 1, false)
+                    -- end)
+                    -- ExecuteWithDelay(7500, function()
+                    --     Utils.PlaySoundAtAllPlayers("/Game/Audio/Environment/Alarms/s_alarm_heavy.s_alarm_heavy", 2, 1, false)
+                    -- end)
                 end
             end
         end
