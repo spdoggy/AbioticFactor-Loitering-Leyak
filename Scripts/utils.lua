@@ -257,6 +257,33 @@ function Utils.PlayTextChatMessage(player, msg, msg_prefix, prefix_color,  msg_c
 end
 
 
+---AAbiotic_PlayerCharacter_C function, that shows colored text at the top of the screen and can play a warning beep
+---@param Message string
+---@param CriticalityLevel ECriticalityLevels|CriticalityLevels|integer|nil Color of the message is based on the CriticalityLevel
+---@param WarningBeep boolean|nil Should a warning sound be played
+function Utils.AllClientDisplayWarningMessage(Message, CriticalityLevel, WarningBeep)
+    if not Message then return end
+    -- Default values
+    CriticalityLevel = CriticalityLevel or MessageColors.Green
+    WarningBeep = WarningBeep or false
+
+    if Utils.IsValid(TheWorld) then
+        local gameState = TheWorld.GameState ---@type AGameStateBase
+        if Utils.IsValid(gameState) and gameState.PlayerArray then
+            for i = 1, #gameState.PlayerArray do
+                local playerState = gameState.PlayerArray[i] ---@cast playerState AAbiotic_PlayerState_C
+                local playerName = playerState.PlayerNamePrivate:ToString()
+                local fText = FText(Message)
+                if fText then
+                    playerState.PawnPrivate:Client_DisplayWarningMessage(fText, CriticalityLevel, WarningBeep)
+                else
+                    LogError('ClientDisplayWarningMessage: Couldn\'t get a FText out of "'..Message..'"')
+                end
+            end
+        end
+    end
+end
+
 ---Get a List of the story event flags
 ---@return table
 function Utils.GetWorldEventFlags()
@@ -443,6 +470,7 @@ function Utils.Broadcast_PlaySoundAtLocation(snd_path, location, volume, pitch, 
             sound.Pitch = pitch
             sound_has_finished = false
             local loud = true
+            sound.bLooping = false -- Some sounds like alarms, will loop endlessly
             game_state:Broadcast_PlaySoundAtLocation(sound, location, loud)
             local sound_off_delay = 1000 + math.floor(sound.Duration * 1000)
 
@@ -482,7 +510,19 @@ function Utils.PlaySoundAtPlayer(snd_path, player_or_actor, volume, pitch, wait)
     Utils.PlaySoundAtActor(snd_path, player_or_actor, volume, pitch, wait)
 end
 
-
+---Play Sound at every Player using GameplayStatics
+function Utils.PlaySoundAtAllPlayers(snd_path, volume, pitch, wait)
+    local wait = wait or false
+    if Utils.IsValid(TheWorld) then
+        local gameState = TheWorld.GameState ---@type AGameStateBase
+        if Utils.IsValid(gameState) and gameState.PlayerArray then
+            for i = 1, #gameState.PlayerArray do
+                local playerState = gameState.PlayerArray[i] ---@cast playerState AAbiotic_PlayerState_C
+                Utils.PlaySoundAtActor(snd_path, playerState.PawnPrivate, volume, pitch, wait)
+            end
+        end
+    end
+end
 
 
 -------------------
