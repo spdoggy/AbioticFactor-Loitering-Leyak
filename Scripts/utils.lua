@@ -470,7 +470,7 @@ function Utils.Broadcast_PlaySoundAtLocation(snd_path, location, volume, pitch, 
             sound.Pitch = pitch
             sound_has_finished = false
             local loud = true
-            sound.bLooping = false -- Some sounds like alarms, will loop endlessly
+            -- sound.bLooping = false -- Some sounds like alarms, will loop endlessly -- this is apparently client side only
             game_state:Broadcast_PlaySoundAtLocation(sound, location, loud)
             local sound_off_delay = 1000 + math.floor(sound.Duration * 1000)
 

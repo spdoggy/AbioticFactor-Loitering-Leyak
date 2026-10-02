@@ -787,7 +787,13 @@ end
 -- Notify on new Day, used to check for containment break event
 local function Handle_OnRep_CurrentDay()
     local dice_roll = math.random()
-    if dice_roll <= (ConfigLeyak.leyak_random_containment_break_chance/100) then
+
+    if ConfigLeyak.admin_messages_enabled then
+        local msg = string.format("[Leyak Containment Break Attempt] Roll = %.1f / %.1f", dice_roll*100, ConfigLeyak.leyak_random_containment_break_chance)
+        Utils.AdminMessage(msg, MOD_PREFIX, Enums.MsgColors.blue, Enums.MsgColors.green)
+    end
+    
+    if (dice_roll*100) <= (ConfigLeyak.leyak_random_containment_break_chance) then
         Utils.AllClientDisplayWarningMessage("The air feels strange...", Enums.ClientWarnMessageColors.Red, false)
 
         local containment_instances = FindAllOf("Deployed_LeyakContainment_C")

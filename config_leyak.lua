@@ -114,7 +114,7 @@ return {
     -- i.e does not work on dedicated servers or for non-host players
     leyak_random_is_invisible_chance = 1,
     -- Random % chance for Leyak to break from Containment
-    leyak_random_containment_break_chance = 50,
+    leyak_random_containment_break_chance = 70,
 
 
     -- ============================================================
