@@ -15,6 +15,7 @@ return {
         "Labs_XRay_FixitAll",
         "Security_Entered",
     },
+    leyak_world_flag_to_start_spawning_at = "Office_ReachedLobby",
     
     -- Randomizes choice between new Leyak behavior modes
     -- Setting this true will randomly override the following:
@@ -122,8 +123,8 @@ return {
     -- ============================================================
 
     -- Move Speeds when Leyak is being viewed AND leyak_is_restricted_by_looking == true
-    leyak_is_restricted_move_walk = 400,
-    leyak_is_restricted_move_sprint = 400,
+    leyak_is_restricted_move_walk = 200,
+    leyak_is_restricted_move_sprint = 200,
     leyak_is_restricted_move_speed_factor = 0.3,
 
     -- Move Speeds after Leyak has been hit by an XRAY and leyak_is_restricted_by_xray == true
@@ -134,9 +135,9 @@ return {
  
     -- Move speeds when Leyak is nearby but the player has looked away
     -- i.e when not viewing the Leyak and leyak_is_restricted_by_looking == true
-    leyak_nearby_walk = 400,
-    leyak_nearby_sprint = 400,
-    leyak_nearby_speed_factor = 1.5,
+    leyak_nearby_walk = 200,
+    leyak_nearby_sprint = 200,
+    leyak_nearby_speed_factor = 1.2,
 
     -- Gives Leyak a Big Speed Boost when greater than [leyak_stalking_distance] away from player.
     leyak_stalking_distance = 2500,
@@ -145,7 +146,7 @@ return {
     leyak_stalking_speed_factor = 7,
 
     -- Slows the Leyak when invisible and less than than [leyak_invisible_distance] away from player.
-    leyak_invisible_distance = 1000,
+    leyak_invisible_distance = 200,
     leyak_invisible_walk = 50,
     leyak_invisible_sprint = 50,
     leyak_invisible_speed_factor = 0.5,

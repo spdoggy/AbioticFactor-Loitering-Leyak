@@ -784,8 +784,16 @@ local function Handle_OnMegalightHit(context, megalight, Tier)
     end
 end
 
--- Notify on new Day, used to check for containment break event
+-- Notify on new Day, used to check for containment break event and start behavior
 local function Handle_OnRep_CurrentDay()
+    
+    -- Determine Starting Behavior 
+    local leyak_director = GetValidLeyakDir()
+    if Utils.IsValid(leyak_director) then
+        leyak_director.RequiredWorldFlag.RowName = FName(ConfigLeyak.leyak_world_flag_to_start_spawning_at)
+    end
+
+    -- Perform Containment Breach Check
     local dice_roll = math.random()
 
     if ConfigLeyak.admin_messages_enabled then

@@ -42,6 +42,24 @@ function Utils.WorldCache(world)
     end
 end
 
+
+function Utils.GetWorld()
+    if Utils.IsValid(TheWorld) then
+        return TheWorld
+    else
+        local gameState = FindFirstOf("Abiotic_Survival_GameState_C")
+        if gameState:IsValid() then
+            local world = gameState:GetWorld()
+            if world and world:IsValid() then
+                Utils.WorldCache(world)
+                return world
+            end
+        end
+    end
+end
+
+
+
 ---Debug Logging
 function Utils.log(message)
     if Config.Debug then
