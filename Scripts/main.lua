@@ -42,6 +42,8 @@ local leyak_target_name = ""
 local leyak_is_invisible = false
 local leyak_sound_cue_started = false
 local leyak_recently_spoke = false
+local clock_tick = 0
+local hour_tick = 1
 
 -- ============================================================
 -- INSTANCES
@@ -802,12 +804,11 @@ local function Handle_OnRep_CurrentDay()
     end
     
     if (dice_roll*100) <= (ConfigLeyak.leyak_random_containment_break_chance) then
-        Utils.AllClientDisplayWarningMessage("The air feels strange...", Enums.ClientWarnMessageColors.Red, false)
-
         local containment_instances = FindAllOf("Deployed_LeyakContainment_C")
         if not containment_instances then
             print("No instances of 'Deployed_LeyakContainment_C' were found\\n")
         else
+            Utils.AllClientDisplayWarningMessage("The air feels strange...", Enums.ClientWarnMessageColors.Red, false)
             for Index, container in pairs(containment_instances) do
                 if container.ContainsLeyak:ToString() == "Leyak" then
                     local delay = 0
@@ -865,6 +866,32 @@ local function Handle_OnRep_CurrentDay()
             end
         end
     end
+end
+
+
+-- Called Every Hour
+local function Handle_ProgressClock(context, IsDaytime)
+    clock_tick = clock_tick + 1
+    if clock_tick % (20*6) == 0 then
+        hour_tick = hour_tick + 1
+    end
+    print("clock/hour")
+    print(clock_tick)
+    print(hour_tick)
+    if hour_tick % ConfigLeyak.leyak_random_voice_jump_scare_per_num_hours == 0 then
+        local dice_roll_speak = math.random()
+        hour_tick = hour_tick + 1
+        if dice_roll_speak <= (ConfigLeyak.leyak_random_voice_jump_scare_chance/100) then
+            local idle_id = math.random(1, 18)
+            local snd_path = string.format("/Game/Audio/Monsters/Leyak/s_leyak_idle_%02d.s_leyak_idle_%02d", idle_id, idle_id)
+            -- Choose 01 to 18 idle noises..
+            local vol = 1
+            local pitch = 1.0
+            local wait = true
+            Utils.PlaySoundAtAllPlayers(snd_path, vol, pitch, wait)
+        end
+    end
+
 end
 
 -- ============================================================
@@ -955,6 +982,19 @@ local function SetupOnGameStateHooks()
             Utils.error(string.format("Hook registration failed: %s", tostring(errHook)))
         else
             Utils.log("Hook registration success: Handle_OnRep_CurrentDay")
+        end
+    end)
+
+
+    ExecuteWithDelay(2500, function()
+        local okHook, errHook = pcall(RegisterHook,
+            "/Game/Blueprints/Environment/Systems/DayNightManager.DayNightManager_C:ProgressClock",
+            Handle_ProgressClock
+        )
+        if not okHook then
+            Utils.error(string.format("Hook registration failed: %s", tostring(errHook)))
+        else
+            Utils.log("Hook registration success: Handle_ProgressClock")
         end
     end)
 

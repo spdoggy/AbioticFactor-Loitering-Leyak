@@ -15,6 +15,8 @@ return {
         "Labs_XRay_FixitAll",
         "Security_Entered",
     },
+
+    -- Allows the leyak to start spawning at an event other than Labs
     leyak_world_flag_to_start_spawning_at = "Office_ReachedLobby",
     
     -- Randomizes choice between new Leyak behavior modes
@@ -115,7 +117,11 @@ return {
     -- i.e does not work on dedicated servers or for non-host players
     leyak_random_is_invisible_chance = 1,
     -- Random % chance for Leyak to break from Containment
-    leyak_random_containment_break_chance = 70,
+    leyak_random_containment_break_chance = 50,
+    -- Random % chance for Leyak fake-out every X hours of in-game time
+    -- Leyak voice will sound near a random player
+    leyak_random_voice_jump_scare_chance = 100,
+    leyak_random_voice_jump_scare_per_num_hours = 2,
 
 
     -- ============================================================
