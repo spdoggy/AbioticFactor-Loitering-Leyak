@@ -685,18 +685,22 @@ local function Handle_SetLeyakOnCooldown(context, CooldownReductionMultiplier)
     if leyak_evaded_by_player or leyak_was_dismissed or leyak_caught_player or ConfigLeyak.leyak_is_dismissed_by_looking then
         -- Player Success
         -- If the player evaded, dismissed via XRAY, or was caught, do not trigger a new event
-        msg = string.format("%s Successfully Evaded the Leyak", leyak_target_name)
-        admin_player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, msg, Enums.MsgColors.green,
-            player_controller,
-            false)
+        if ConfigLeyak.admin_messages_enabled then
+            msg = string.format("%s Successfully Evaded the Leyak", leyak_target_name)
+            admin_player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, msg, Enums.MsgColors.green,
+                player_controller,
+                false)
+        end
     else
         -- Player Failure
         -- The system de-spawned the Leyak because of the stuck timer, area transition/load, or other internal logic
         -- Reduce the Leyak Cooldown to force another chase immediately
-        msg = string.format("%s failed evading the Leyak", leyak_target_name)
-        admin_player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, msg, Enums.MsgColors.red,
-            player_controller,
-            false)
+        if ConfigLeyak.admin_messages_enabled then
+            msg = string.format("%s failed evading the Leyak", leyak_target_name)
+            admin_player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, msg, Enums.MsgColors.red,
+                player_controller,
+                false)
+        end
         CooldownReductionMultiplier:set(0.005)
     end
 end
@@ -875,9 +879,6 @@ local function Handle_ProgressClock(context, IsDaytime)
     if clock_tick % (20*6) == 0 then
         hour_tick = hour_tick + 1
     end
-    print("clock/hour")
-    print(clock_tick)
-    print(hour_tick)
     if hour_tick % ConfigLeyak.leyak_random_voice_jump_scare_per_num_hours == 0 then
         local dice_roll_speak = math.random()
         hour_tick = hour_tick + 1
