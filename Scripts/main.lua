@@ -873,7 +873,7 @@ local function Handle_OnRep_CurrentDay()
 end
 
 
--- Called Every Hour
+-- Called Frequently
 local function Handle_ProgressClock()
 
     -- Voice Scare Players if they Progressed to the Start-Spawning Event
