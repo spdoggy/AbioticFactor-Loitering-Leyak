@@ -876,7 +876,7 @@ end
 -- Called Every Hour
 local function Handle_ProgressClock()
 
-    -- Voice Scare Players if Progressed to Start Spawning Event
+    -- Voice Scare Players if they Progressed to the Start-Spawning Event
     if Utils.WorldHasEventOccurred(ConfigLeyak.leyak_world_flag_to_start_spawning_at) then
         clock_tick = clock_tick + 1
         if clock_tick % (20) == 0 then  -- * 6
@@ -886,13 +886,22 @@ local function Handle_ProgressClock()
             local dice_roll_speak = math.random()
             hour_tick = hour_tick + 1
             if dice_roll_speak <= (ConfigLeyak.leyak_random_voice_jump_scare_chance/100) then
-                local idle_id = math.random(1, 18)
-                local snd_path = string.format("/Game/Audio/Monsters/Leyak/s_leyak_idle_%02d.s_leyak_idle_%02d", idle_id, idle_id)
-                -- Choose 01 to 18 idle noises..
-                local vol = 1
-                local pitch = 1.0
-                local wait = true
-                Utils.PlaySoundAtAllPlayers(snd_path, vol, pitch, wait)
+                local player_state = Utils.GetRandomPlayerState()
+                local player_char = player_state.PawnPrivate ---@type AAbiotic_PlayerCharacter_C
+
+                if doesPlayerHaveBuff(player_char, Enums.Buffs.Buff_LeyakSafetyZone) then
+                    -- Player is in a Safe Zone, No Sound
+                    clock_tick = clock_tick + 1
+                else
+                    local idle_id = math.random(1, 18)
+                    local snd_path = string.format("/Game/Audio/Monsters/Leyak/s_leyak_idle_%02d.s_leyak_idle_%02d", idle_id, idle_id)
+                    -- Choose 01 to 18 idle noises..
+                    local vol = 1
+                    local pitch = 1.0
+                    local wait = true
+                    Utils.PlaySoundAtAllPlayers(snd_path, vol, pitch, wait)
+                    Utils.PlaySoundAtPlayer(snd_path, player_char, vol, pitch, wait)
+                end
             end
         end
     end
@@ -1115,6 +1124,8 @@ if ToggleKey then
     local function ModDebugKey()
         ExecuteInGameThread(function()
             -- Test Stuff Here
+            local player = Utils.GetRandomPlayerState()
+            print(player)
         end)
     end
 
