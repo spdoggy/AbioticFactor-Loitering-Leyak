@@ -792,7 +792,7 @@ end
 
 -- Notify on new Day, used to check for containment break event and start behavior
 local function Handle_OnRep_CurrentDay()
-    
+
     -- Determine Starting Behavior 
     local leyak_director = GetValidLeyakDir()
     if Utils.IsValid(leyak_director) then
@@ -874,25 +874,28 @@ end
 
 
 -- Called Every Hour
-local function Handle_ProgressClock(context, IsDaytime)
-    clock_tick = clock_tick + 1
-    if clock_tick % (20*6) == 0 then
-        hour_tick = hour_tick + 1
-    end
-    if hour_tick % ConfigLeyak.leyak_random_voice_jump_scare_per_num_hours == 0 then
-        local dice_roll_speak = math.random()
-        hour_tick = hour_tick + 1
-        if dice_roll_speak <= (ConfigLeyak.leyak_random_voice_jump_scare_chance/100) then
-            local idle_id = math.random(1, 18)
-            local snd_path = string.format("/Game/Audio/Monsters/Leyak/s_leyak_idle_%02d.s_leyak_idle_%02d", idle_id, idle_id)
-            -- Choose 01 to 18 idle noises..
-            local vol = 1
-            local pitch = 1.0
-            local wait = true
-            Utils.PlaySoundAtAllPlayers(snd_path, vol, pitch, wait)
+local function Handle_ProgressClock()
+
+    -- Voice Scare Players if Progressed to Start Spawning Event
+    if Utils.WorldHasEventOccurred(ConfigLeyak.leyak_world_flag_to_start_spawning_at) then
+        clock_tick = clock_tick + 1
+        if clock_tick % (20) == 0 then  -- * 6
+            hour_tick = hour_tick + 1
+        end
+        if hour_tick % ConfigLeyak.leyak_random_voice_jump_scare_per_num_hours == 0 then
+            local dice_roll_speak = math.random()
+            hour_tick = hour_tick + 1
+            if dice_roll_speak <= (ConfigLeyak.leyak_random_voice_jump_scare_chance/100) then
+                local idle_id = math.random(1, 18)
+                local snd_path = string.format("/Game/Audio/Monsters/Leyak/s_leyak_idle_%02d.s_leyak_idle_%02d", idle_id, idle_id)
+                -- Choose 01 to 18 idle noises..
+                local vol = 1
+                local pitch = 1.0
+                local wait = true
+                Utils.PlaySoundAtAllPlayers(snd_path, vol, pitch, wait)
+            end
         end
     end
-
 end
 
 -- ============================================================

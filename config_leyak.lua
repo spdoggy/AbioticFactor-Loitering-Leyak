@@ -11,9 +11,11 @@ return {
     -- in the following list is true. The default setting for this list is to
     -- gate the new Leyak modes behind the acquisition of the hand-held XRAY lamp.
     leyak_limit_behavior_until_world_flags = true,
+
     world_flags_required = {
-        "Labs_XRay_FixitAll",
-        "Security_Entered",
+        "Office_ReachedLobby",
+    --    "Labs_XRay_FixitAll",
+    --    "Security_Entered",
     },
 
     -- Allows the leyak to start spawning at an event other than Labs
@@ -120,7 +122,7 @@ return {
     leyak_random_containment_break_chance = 50,
     -- Random % chance for Leyak fake-out every X hours of in-game time
     -- Leyak voice will sound near a random player
-    leyak_random_voice_jump_scare_chance = 100,
+    leyak_random_voice_jump_scare_chance = 40,
     leyak_random_voice_jump_scare_per_num_hours = 2,
 
 
@@ -248,7 +250,7 @@ return {
     -- ============================================================
     -- Debug Settings
     -- ============================================================
-    admin_messages_enabled = true,
+    admin_messages_enabled = false,
     log_distance_to_player = false,
 
 
