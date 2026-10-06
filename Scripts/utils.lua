@@ -216,6 +216,29 @@ function Utils.GetPlayerName(player)
     return ""
 end
 
+---Return a player from the list of online players
+---@return AAbiotic_PlayerState_C
+function Utils.GetRandomPlayerState()
+    if Utils.IsValid(TheWorld) then
+        local gameState = TheWorld.GameState ---@type AGameStateBase
+        if Utils.IsValid(gameState) and gameState.PlayerArray then
+            local selected = math.random(1, #gameState.PlayerArray)
+            local playerState = gameState.PlayerArray[selected] ---@cast playerState AAbiotic_PlayerState_C
+            local playerName = playerState.PlayerNamePrivate:ToString()
+            Message = playerName
+            local fText = FText(Message)
+            if fText then
+                playerState.PawnPrivate:Client_DisplayWarningMessage(fText, 0, WarningBeep)
+            else
+                LogError('ClientDisplayWarningMessage: Couldn\'t get a FText out of "'..Message..'"')
+            end
+            return playerState
+        end
+    end
+    return CreateInvalidObject() ---@type AAbiotic_PlayerState_C
+end
+
+
 ---Get the Admin Player from ConfigAdmin
 ---@return AAbiotic_PlayerCharacter_C
 function Utils.GetAdminPlayer()
