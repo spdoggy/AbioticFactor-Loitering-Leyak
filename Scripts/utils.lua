@@ -225,13 +225,6 @@ function Utils.GetRandomPlayerState()
             local selected = math.random(1, #gameState.PlayerArray)
             local playerState = gameState.PlayerArray[selected] ---@cast playerState AAbiotic_PlayerState_C
             local playerName = playerState.PlayerNamePrivate:ToString()
-            Message = playerName
-            local fText = FText(Message)
-            if fText then
-                playerState.PawnPrivate:Client_DisplayWarningMessage(fText, 0, WarningBeep)
-            else
-                LogError('ClientDisplayWarningMessage: Couldn\'t get a FText out of "'..Message..'"')
-            end
             return playerState
         end
     end
