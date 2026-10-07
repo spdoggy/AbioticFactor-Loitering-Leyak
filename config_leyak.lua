@@ -7,9 +7,15 @@ return {
     -- Nominal Leyak Cooldown (Seconds), Base Game Default is 900
     leyak_cooldown = 900,
 
+    -- Randomized leyak Min/Max Cooldown (Seconds), Set both to 900 for default.
+    leyak_cooldown_min = 180,
+    leyak_cooldown_max = 900,
+
     -- Locks the new leyak behaviors until at least ONE of the events 
-    -- in the following list is true. The default setting for this list is to
-    -- gate the new Leyak modes behind the acquisition of the hand-held XRAY lamp.
+    -- in the following list is true. The default setting for this Mod now is to
+    -- immediately release the Leyak in the Office Lobby, however it is also possible
+    -- to gate the new Leyak modes behind the acquisition of the hand-held XRAY lamp.
+    -- Simply comment out Office_ReachedLobby and uncomment Labs_XRay_FixitAll below.
     leyak_limit_behavior_until_world_flags = true,
 
     world_flags_required = {
@@ -19,6 +25,9 @@ return {
     },
 
     -- Allows the leyak to start spawning at an event other than Labs
+    -- The default setting for this Mod now is to immediately release the Leyak 
+    -- in the Office Lobby. Set this back to "LABS_EnteredLabs" to restore the
+    --  default start event to labs.
     leyak_world_flag_to_start_spawning_at = "Office_ReachedLobby",
     
     -- Randomizes choice between new Leyak behavior modes
@@ -122,8 +131,9 @@ return {
     leyak_random_containment_break_chance = 50,
     -- Random % chance for Leyak fake-out every X hours of in-game time
     -- Leyak voice will sound near a random player
+    leyak_real_jump_scare_chance = 90,
     leyak_random_voice_jump_scare_chance = 40,
-    leyak_random_voice_jump_scare_per_num_hours = 2,
+    leyak_random_jump_scare_per_num_hours = 2,
 
 
     -- ============================================================
@@ -250,7 +260,7 @@ return {
     -- ============================================================
     -- Debug Settings
     -- ============================================================
-    admin_messages_enabled = false,
+    admin_messages_enabled = true,
     log_distance_to_player = false,
 
 

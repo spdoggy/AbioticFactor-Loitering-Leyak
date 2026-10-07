@@ -44,6 +44,8 @@ local leyak_sound_cue_started = false
 local leyak_recently_spoke = false
 local clock_tick = 0
 local hour_tick = 1
+local leyak_custom_spawned = false
+local leyak_no_dmg_sphere = false
 
 -- ============================================================
 -- INSTANCES
@@ -94,6 +96,22 @@ local function GetValidLeyak()
         Leyak_NPC = Utils.GetLeyak()
         return Leyak_NPC
     end
+end
+
+-- Check for Leyak Containment
+---@return boolean
+local function LeyakIsContained()
+    local containment_instances = FindAllOf("Deployed_LeyakContainment_C")
+    if not containment_instances then
+        return false
+    else
+        for Index, container in pairs(containment_instances) do
+            if container.ContainsLeyak:ToString() == "Leyak" then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 
@@ -411,6 +429,11 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
     leyak_sound_cue_started = false
     leyak_recently_spoke = false
 
+    -- No further config if this is simply a jump-scare
+    if leyak_no_dmg_sphere then
+        return
+    end
+
     GetValidLeyakDir()
 
     ExecuteWithDelay(5000, function()
@@ -432,7 +455,9 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
         Leyak_NPC.DistanceDifferenceToDespawn = ConfigLeyak.DistanceDifferenceToDespawn
 
         -- Record the Target Player Name
-        leyak_target_name = leyak.TargetPlayer.MyPlayerState:GetPlayerName():ToString()
+        if not leyak_no_dmg_sphere then
+            leyak_target_name = leyak.TargetPlayer.MyPlayerState:GetPlayerName():ToString()
+        end
 
         -- New XRAY Duration from Min/Max Range
         ConfigLeyak.leyak_xray_dismissal_time = math.random(
@@ -574,7 +599,11 @@ local function Handle_TriggerViewedByTarget()
         leyak_npc.DistanceDifferenceToDespawn = ConfigLeyak.DistanceDifferenceToDespawn
 
         -- Extend Reach to allow Leyak to damage even if being viewed
-        leyak_npc.DamageSphere.SphereRadius = 400
+        if leyak_no_dmg_sphere then
+            leyak_npc.DamageSphere.SphereRadius = 0
+        else
+            leyak_npc.DamageSphere.SphereRadius = 400
+        end
 
         -- Attempt Speech
         LeyakDoRandomSpeech()
@@ -691,6 +720,17 @@ local function Handle_SetLeyakOnCooldown(context, CooldownReductionMultiplier)
                 player_controller,
                 false)
         end
+
+        -- Randomize Next Cooldown Time
+        ConfigLeyak.leyak_cooldown = math.random(ConfigLeyak.leyak_cooldown_min, ConfigLeyak.leyak_cooldown_max)
+        leyak_director.LeyakCooldown = ConfigLeyak.leyak_cooldown
+
+        if ConfigLeyak.admin_messages_enabled then
+            msg = string.format("New Randomized Leyak Cooldown: %f", ConfigLeyak.leyak_cooldown)
+            admin_player_controller:Local_DisplayTextChatMessage(MOD_PREFIX, Enums.MsgColors.bg, msg, Enums.MsgColors.green,
+                player_controller,
+                false)
+        end
     else
         -- Player Failure
         -- The system de-spawned the Leyak because of the stuck timer, area transition/load, or other internal logic
@@ -702,8 +742,15 @@ local function Handle_SetLeyakOnCooldown(context, CooldownReductionMultiplier)
                 false)
         end
         CooldownReductionMultiplier:set(0.005)
+
+        -- No Cooldown
+        ConfigLeyak.leyak_cooldown = 1
+        leyak_director.LeyakCooldown = ConfigLeyak.leyak_cooldown
     end
+
+
 end
+
 
 local function Handle_TriggerTargetLookedAway()
     local leyak_npc = GetValidLeyak()
@@ -790,6 +837,84 @@ local function Handle_OnMegalightHit(context, megalight, Tier)
     end
 end
 
+local function Spawn_Leyak_Scare()
+    local rplayer = Utils.GetRandomPlayerState()
+
+    -- Exit if in Safe Zone
+    if doesPlayerHaveBuff(rplayer.PawnPrivate, Enums.Buffs.Buff_LeyakSafetyZone) then
+        return
+    end
+
+    ExecuteInGameThread(function()
+        local leyak_class = "NPC_Leyak_C"
+        local leyak_path = "/Game/Blueprints/Characters/NPCs/NPC_Leyak.NPC_Leyak_C"
+        LoadAsync({ leyak_path }, function()
+            local leyak_instance = StaticFindObject(leyak_path)
+            local world = Utils.GetWorld()
+            local gs = StaticFindObject("/Script/Engine.Default__GameplayStatics")
+            local kismetMathLibrary = StaticFindObject("/Script/Engine.Default__KismetMathLibrary")
+            
+            leyak_target_name = rplayer.PlayerNamePrivate:ToString()
+
+
+
+            local location = rplayer.PawnPrivate:K2_GetActorLocation()
+            
+            -- Offset from Player Location
+            location.X = location.X + 300
+            location.Y = location.Y + 300
+            local rotation = {Pitch = 0.0, Yaw = 0.0, Roll = 0.0}
+
+            -- Exit if No MathLib or GamePlayStatics
+            if not Utils.IsValid(gs) or not Utils.IsValid(kismetMathLibrary) then
+                return
+            end
+
+            -- Transform Location and Start the Spawning
+            leyak_no_dmg_sphere = true
+            local transform = kismetMathLibrary:MakeTransform(location, rotation, {1.0, 1.0, 1.0})
+            local deferred_actor = gs:BeginDeferredActorSpawnFromClass(world, leyak_instance, transform, 0, nil, 0)
+            local ai_director = Utils.GetAiDirector()
+            local leyak_ai_dir =  Utils.GetLeyakAiDirector()
+
+            -- Proceed if Spawn was Valid
+            if Utils.IsValid(deferred_actor) and Utils.IsValid(leyak_ai_dir) then
+
+                ai_director.ActiveLeyak = deferred_actor
+
+                leyak_ai_dir.ActiveStalkingNPC = deferred_actor
+                leyak_ai_dir.CurrentStalkingNpcTarget = rplayer.OwningPlayer
+                --leyak_ai_dir.CurrentStalkingNpcTarget = rplayer.PawnPrivate
+
+                Leyak_NPC = deferred_actor
+                deferred_actor.HasBeenXrayed = true
+                deferred_actor.TargetPlayer = rplayer.PawnPrivate
+                deferred_actor:UpdateLeyakVisibility()
+                deferred_actor.bHidden = false
+                deferred_actor.LeyakType = 0
+                deferred_actor.DealDamageInfront = false
+
+                if ConfigLeyak.admin_messages_enabled then
+                    local msg = string.format("Leyak Jump Scare: %s ", rplayer.PlayerNamePrivate:ToString())
+                    Utils.AdminMessage(msg, MOD_PREFIX, Enums.MsgColors.blue, Enums.MsgColors.green)
+                end
+
+                ExecuteWithDelay(7000, function()
+                    --deferred_actor:PrepareLeyakDespawn()
+                    deferred_actor:Broadcast_DespawnFX()
+                    leyak_no_dmg_sphere = false
+                end)
+
+                local finish_spawn = gs:FinishSpawningActor(deferred_actor, transform, 0)
+            end
+
+            
+        end)
+    end)
+end
+
+
+
 -- Notify on new Day, used to check for containment break event and start behavior
 local function Handle_OnRep_CurrentDay()
 
@@ -809,9 +934,7 @@ local function Handle_OnRep_CurrentDay()
     
     if (dice_roll*100) <= (ConfigLeyak.leyak_random_containment_break_chance) then
         local containment_instances = FindAllOf("Deployed_LeyakContainment_C")
-        if not containment_instances then
-            print("No instances of 'Deployed_LeyakContainment_C' were found\\n")
-        else
+        if containment_instances then
             Utils.AllClientDisplayWarningMessage("The air feels strange...", Enums.ClientWarnMessageColors.Red, false)
             for Index, container in pairs(containment_instances) do
                 if container.ContainsLeyak:ToString() == "Leyak" then
@@ -882,10 +1005,14 @@ local function Handle_ProgressClock()
         if clock_tick % (20) == 0 then  -- * 6
             hour_tick = hour_tick + 1
         end
-        if hour_tick % ConfigLeyak.leyak_random_voice_jump_scare_per_num_hours == 0 then
+
+        if hour_tick % ConfigLeyak.leyak_random_jump_scare_per_num_hours == 0 then
             local dice_roll_speak = math.random()
+            local dice_roll_scare = math.random()
             hour_tick = hour_tick + 1
-            if dice_roll_speak <= (ConfigLeyak.leyak_random_voice_jump_scare_chance/100) then
+            if dice_roll_scare <= (ConfigLeyak.leyak_real_jump_scare_chance/100) and not LeyakIsContained() then
+                Spawn_Leyak_Scare()
+            elseif dice_roll_speak <= (ConfigLeyak.leyak_random_voice_jump_scare_chance/100) then
                 local player_state = Utils.GetRandomPlayerState()
                 if Utils.IsValid(player_state) then
                     local player_char = player_state.PawnPrivate ---@type AAbiotic_PlayerCharacter_C
@@ -1124,8 +1251,8 @@ if ToggleKey then
     local function ModDebugKey()
         ExecuteInGameThread(function()
             -- Test Stuff Here
-            local player = Utils.GetRandomPlayerState()
-            print(player)
+            --Spawn_Leyak()
+            Utils.PrintWorldEventFlags()
         end)
     end
 
