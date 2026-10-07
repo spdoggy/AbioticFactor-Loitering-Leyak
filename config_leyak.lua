@@ -131,7 +131,7 @@ return {
     leyak_random_containment_break_chance = 50,
     -- Random % chance for Leyak fake-out every X hours of in-game time
     -- Leyak voice will sound near a random player
-    leyak_real_jump_scare_chance = 90,
+    leyak_real_jump_scare_chance = 20,
     leyak_random_voice_jump_scare_chance = 40,
     leyak_random_jump_scare_per_num_hours = 2,
 
