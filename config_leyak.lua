@@ -129,11 +129,18 @@ return {
     leyak_random_is_invisible_chance = 1,
     -- Random % chance for Leyak to break from Containment
     leyak_random_containment_break_chance = 50,
-    -- Random % chance for Leyak fake-out every X hours of in-game time
-    -- Leyak voice will sound near a random player
-    leyak_real_jump_scare_chance = 20,
+    
+    -- Random % chance for Leyak events. 
+    -- Set leyak_random_any_jump_scare_per_num_hours below to control occurrence
     leyak_random_voice_jump_scare_chance = 40,
-    leyak_random_jump_scare_per_num_hours = 2,
+    leyak_teleport_attack_chance = 20,
+    leyak_quick_jump_scare_chance = 90,
+
+    -- Random % chance for Leyak events every X hours of in-game time
+    -- Controls the rate of Leyak events above
+    leyak_random_any_jump_scare_per_num_hours = 2,
+
+    
 
 
     -- ============================================================
