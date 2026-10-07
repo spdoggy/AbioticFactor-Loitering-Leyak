@@ -341,6 +341,30 @@ function Utils.GetWorldEventFlags()
     return out
 end
 
+
+
+---Print a List of the story event flags
+function Utils.PrintWorldEventFlags()
+
+    wfs = FindFirstOf("WorldFlagSubsystem")
+
+    if not Utils.IsValid(wfs) then
+        return {}
+    end
+
+    local ok, loaded = pcall(function() return wfs:HasWorldFlagsLoaded() end)
+    if not ok or not loaded then return nil end
+
+    local out = {}
+    local flags = {}
+    pcall(function() wfs:GetWorldFlags(flags) end)
+    for _, f in ipairs(flags) do
+        local ok2, name = pcall(function() return f:get():ToString() end)
+        print(name)
+    end
+    return out
+end
+
 ---Returns true if an event name is true in the world event log
 ---@return boolean
 function Utils.WorldHasEventOccurred(event_name)
