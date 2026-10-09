@@ -2,6 +2,12 @@
 -- https://docs.ue4ss.com/guides/using-custom-lua-bindings
 
 
+--[[
+    Author: SpDoggy
+    Date: 2026-08-19
+    Mod Name: utilities
+]]
+
 
 -- ============================================================
 -- CONFIG
@@ -17,10 +23,18 @@ local Utils = {}
 -- INSTANCES
 -- ============================================================
 local TheWorld = CreateInvalidObject() ---@cast WorldCache UWorld
+local DayNightManagerCache = CreateInvalidObject() ---@cast DayNightManagerCache ADayNightManager_C
 local LeyakNpcCache = CreateInvalidObject() -- @ANPC_Leyak_C;
 local LeyakDirectorCache = CreateInvalidObject() -- @ULeyakDirectorComponent_C;
 local AIDirectorCache = CreateInvalidObject() ---@cast AIDirectorCache AAbiotic_AIDirector_C
+local WeatherEventLibCache = CreateInvalidObject() ---@cast WeatherEventLibCache UWeatherEventHandleFunctionLibrary
 local sound_has_finished = true
+
+local PROP_ITEM_DATA_TABLE = "ItemDataTable_18_BF1052F141F66A976F4844AB2B13062B" -- cooked GUID slot fields; first to break on a game update
+local PROP_CHANGEABLE_DATA = "ChangeableData_12_2B90E1F74F648135579D39A49F5A2313"
+local PROP_CUR_DURABILITY  = "CurrentItemDurability_4_24B4D0E64E496B43FB8D3CA2B9D161C8"
+local PROP_MAX_DURABILITY  = "MaxItemDurability_6_F5D5F0D64D4D6050CCCDE4869785012B"
+local PROP_CUR_STACK       = "CurrentStack_9_D443B69044D640B0989FD8A629801A49"
 
 -- ============================================================
 -- UTILITIES
@@ -56,6 +70,8 @@ function Utils.GetWorld()
             end
         end
     end
+    Utils.error("[GetWorld]: Invalid World")
+    return TheWorld
 end
 
 
@@ -107,7 +123,13 @@ end
 function Utils.GetGameMode()
     if Utils.IsValid(TheWorld) and TheWorld.AuthorityGameMode then
         return TheWorld.AuthorityGameMode
+    else
+        local world = Utils.GetWorld()
+        if Utils.IsValid(world) and world.AuthorityGameMode then
+            return world.AuthorityGameMode
+        end
     end
+    Utils.error("[GetGameMode]: Failed to get AuthorityGameMode")
     return CreateInvalidObject() ---@type AGameModeBase
 end
 
@@ -118,6 +140,7 @@ function Utils.GetAiDirector()
         return AIDirectorCache
     end
     local gameMode = Utils.GetGameMode() ---@cast gameMode AAbiotic_Survival_GameMode_C
+
     if Utils.IsValid(gameMode) and gameMode.AI_Director then
         AIDirectorCache = gameMode.AI_Director
         return AIDirectorCache
@@ -139,7 +162,7 @@ function Utils.GetLeyakAiDirector()
         return ai_director.LeyakDirectorComponent
     end
 
-    Utils.error("[GetLeyakAiDirector]: Failed to get AiDirector")
+    Utils.error("[GetLeyakAiDirector]: Failed to get LeyakAiDirector")
     return CreateInvalidObject() ---@type ULeyakDirectorComponent_C
 end
 
@@ -159,6 +182,28 @@ function Utils.GetLeyak()
     Utils.error("[GetLeyak]: Failed to get Leyak")
     return CreateInvalidObject() ---@type ANPC_Leyak_C
 end
+
+---Get the current DayNightManager
+---@return ADayNightManager_C
+function Utils.GetDayNightManager()
+    if Utils.IsValid(DayNightManagerCache) then
+        return DayNightManagerCache
+    end
+
+    local ai_director = Utils.GetAiDirector()
+    if Utils.IsValid(ai_director) and ai_director.DayNightManager then
+        DayNightManagerCache = ai_director.DayNightManager
+    end
+    return DayNightManagerCache
+end
+
+--Cache the DayNightManager
+function Utils.CacheDayNightManager(dn_manager)
+    if Utils.IsValid(dn_manager) then
+        DayNightManagerCache = dn_manager
+    end
+end
+
 
 ---Find a PlayerState object by the player_id
 ---@param player_id string|FString
@@ -259,6 +304,20 @@ function Utils.AdminMessage(msg, msg_prefix, prefix_color,  msg_color)
     end
 end
 
+
+---Send a text chat message to the admin player only
+---@param msg string Message to Send
+---@param msg_prefix FString|string Prefix of Message to Send, i.e name of the Mod
+---@param prefix_color table Message prefix color
+---@param msg_color table Message color
+function Utils.AdminWarnMessage(msg, CriticalityLevel, WarningBeep)
+    local admin_player = Utils.GetPlayerFromId(ConfigAdmin.admin_id)
+    if Utils.IsValid(admin_player) then
+        Utils.ClientDisplayWarningMessage(admin_player, msg, CriticalityLevel, WarningBeep)
+        Utils.log(msg)
+    end
+end
+
 ---Send a text chat message to the player, Overload of Local_DisplayTextChatMessage
 ---@param player_controller AAbiotic_PlayerController_C Player message recipient (direct via PlayerController)
 ---@param msg string Message to Send
@@ -311,9 +370,30 @@ function Utils.AllClientDisplayWarningMessage(Message, CriticalityLevel, Warning
                 if fText then
                     playerState.PawnPrivate:Client_DisplayWarningMessage(fText, CriticalityLevel, WarningBeep)
                 else
-                    LogError('ClientDisplayWarningMessage: Couldn\'t get a FText out of "'..Message..'"')
+                    Utils.log('ClientDisplayWarningMessage: Couldn\'t get a FText out of "'..Message..'"')
                 end
             end
+        end
+    end
+end
+
+---AAbiotic_PlayerCharacter_C function, that shows colored text at the top of the screen and can play a warning beep
+---@param player AAbiotic_PlayerCharacter_C
+---@param Message string
+---@param CriticalityLevel ECriticalityLevels|CriticalityLevels|integer|nil Color of the message is based on the CriticalityLevel
+---@param WarningBeep boolean|nil Should a warning sound be played
+function Utils.ClientDisplayWarningMessage(player, Message, CriticalityLevel, WarningBeep)
+    if not Message then return end
+    -- Default values
+    CriticalityLevel = CriticalityLevel or MessageColors.Green
+    WarningBeep = WarningBeep or false
+
+    if Utils.IsValid(player) then
+        local fText = FText(Message)
+        if fText then
+            player:Client_DisplayWarningMessage(fText, CriticalityLevel, WarningBeep)
+        else
+            Utils.log('ClientDisplayWarningMessage: Couldn\'t get a FText out of "'..Message..'"')
         end
     end
 end
@@ -611,6 +691,136 @@ function Utils.Broadcast_Play3DSoundEffect(snd_path, player, location, wait)
         end
     end)
 end
+
+------------
+
+local function GetPlayerInventory(playerPawn)
+    if (not playerPawn or not playerPawn:IsValid()) then
+        return nil
+    end
+
+    if (playerPawn.CharacterInventory and playerPawn.CharacterInventory:IsValid()) then
+        return playerPawn.CharacterInventory
+    end
+
+    return nil
+end
+
+
+local function FindEmptySlot(inventory)
+    if (not inventory or not inventory.CurrentInventory) then
+        return nil
+    end
+
+    for i = 1, #inventory.CurrentInventory do
+        local slot = inventory.CurrentInventory[i]
+
+        if (slot) then
+            local rowName = slot[PROP_ITEM_DATA_TABLE].RowName:ToString()
+
+            if (rowName == "None" or rowName == "Empty" or rowName == "") then
+                return i
+            end
+        end
+    end
+
+    return nil
+end
+
+-- Place one item into one target's inventory. Writes its own errors; returns success.
+function Utils.GiveItemToTarget(pawn, name, itemId, item_table, item_cat, quantity)
+
+    local inventory = GetPlayerInventory(pawn)
+    if (not inventory) then
+        print(string.format("[Error] Cannot access %s's inventory", name))
+        return false
+    end
+
+    local dataTable = StaticFindObject(item_table)
+    if (not dataTable or not dataTable:IsValid()) then
+        print(string.format("[Error] Failed to load table: %s", item_cat))
+        return false
+    end
+
+    local slotIndex = FindEmptySlot(inventory)
+    if (not slotIndex) then
+        print(string.format("[Error] %s's inventory is full", name))
+        return false
+    end
+
+    local slot = inventory.CurrentInventory[slotIndex]
+
+    slot[PROP_ITEM_DATA_TABLE].DataTable = dataTable
+    slot[PROP_ITEM_DATA_TABLE].RowName = FName(itemId)
+
+    slot[PROP_CHANGEABLE_DATA][PROP_CUR_DURABILITY] = 100.0
+    slot[PROP_CHANGEABLE_DATA][PROP_MAX_DURABILITY] = 100.0
+    slot[PROP_CHANGEABLE_DATA][PROP_CUR_STACK] = quantity
+
+    pcall(function()
+        inventory:OnRep_CurrentInventory()
+    end)
+
+    print(string.format("+ Gave %s: %s x%d", name, itemId, quantity))
+    return true
+end
+
+-----------------
+
+
+---@return UWeatherEventHandleFunctionLibrary
+function Utils.GetWeatherEventLib()
+    if not Utils.IsValid(WeatherEventLibCache) then
+        WeatherEventLibCache = StaticFindObject("/Script/AbioticFactor.Default__WeatherEventHandleFunctionLibrary")
+        ---@cast WeatherEventLibCache UWeatherEventHandleFunctionLibrary
+    end
+    return WeatherEventLibCache
+end
+
+
+---Triggers a weather event
+---@param EventName string|WeatherEvents
+---@return boolean Success
+function Utils.TriggerWeatherEvent(EventName)
+
+    if type(EventName) ~= "string" then return false end
+
+    local weatherEventHandleFunctionLibrary = Utils.GetWeatherEventLib()
+    local dn_manager = Utils.GetDayNightManager()
+    if Utils.IsValid(weatherEventHandleFunctionLibrary) and Utils.IsValid(dn_manager) then
+        ---@type table<LocalUnrealParam>
+        local outRowHandles = {} ---@type LocalUnrealParam[]
+        weatherEventHandleFunctionLibrary:GetAllWeatherEventRowHandles(outRowHandles)
+
+        if #outRowHandles > 0 and EventName == "None" then
+            local rowHandle = outRowHandles[1]:get() ---@type FWeatherEventRowHandle
+            rowHandle.RowName = NAME_None
+            local event_table_row = { 
+                RowName = rowHandle.RowName,
+                DataTablePath = rowHandle.DataTablePath
+            }
+            dn_manager:TriggerWeatherEvent(event_table_row)
+            return true
+        end
+
+        for i = 1, #outRowHandles, 1 do
+            local param = outRowHandles[i]
+            local rowHandle = param:get() ---@type FWeatherEventRowHandle
+            local rowName = rowHandle.RowName:ToString()
+            if rowName == EventName then
+                local event_table_row = { 
+                    RowName = rowHandle.RowName,
+                    DataTablePath = rowHandle.DataTablePath
+                }
+                dn_manager:TriggerWeatherEvent(event_table_row)
+                return true
+            end
+        end
+    end
+    return false
+end
+
+
 
 
 return Utils
