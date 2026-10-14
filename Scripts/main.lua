@@ -948,7 +948,6 @@ local function Handle_TriggerTargetLookedAway()
         -- elseif leyak_state == LeyakStates.CombatDoLook then
         --     leyak_state = LeyakStates.Combat
         -- end
-        
 
         LeyakDoRandomSpeech()
 
