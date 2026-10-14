@@ -8,7 +8,7 @@ return {
     leyak_cooldown = 900,
 
     -- Randomized leyak Min/Max Cooldown (Seconds), Set both to 900 for default.
-    leyak_cooldown_min = 180,
+    leyak_cooldown_min = 300,
     leyak_cooldown_max = 900,
 
     -- Locks the new leyak behaviors until at least ONE of the events 
@@ -107,7 +107,12 @@ return {
     -- 2. leyak_was_dismissed [HasBeenXrayed == true]
     -- 3. leyak entered combat state for grab attack [leyak_caught_player == true]
     -- 4. Any despawn during default behavior mode [leyak_is_dismissed_by_looking == true]
-    DistanceDifferenceToDespawn = 8000.0,
+    DistanceDifferenceToDespawn = 5000.0,
+
+    -- Does triggering aggro from the Leyak count as a successful escape?
+    -- If set to true, the Leyak cooldown will reset, otherwise 
+    -- if set to false, the Leyak will quickly spawn again to continue the hunt.
+    leyak_combat_triggered_is_successful_escape = false,
 
     -- Leyak will be dismissed by the sensory companion trinket,
     -- i.e behave functionally equivalent being hit by a hand-held XRAY lamp
@@ -132,16 +137,15 @@ return {
     
     -- Random % chance for Leyak events. 
     -- Set leyak_random_any_jump_scare_per_num_hours below to control occurrence
-    leyak_random_voice_jump_scare_chance = 50,
-    leyak_teleport_attack_chance = 10,
+    leyak_random_voice_jump_scare_chance = 70,
+    leyak_teleport_attack_chance = 20,
     leyak_quick_jump_scare_chance = 20,
 
     -- Random % chance for Leyak events every X hours of in-game time
     -- Controls the rate of Leyak events above
-    leyak_random_any_jump_scare_per_num_hours = 6,
-
-    
-
+    leyak_random_any_jump_scare_per_num_hours = 2,
+    leyak_random_any_jump_scare_per_num_hours_min = 1,
+    leyak_random_any_jump_scare_per_num_hours_max = 5,
 
     -- ============================================================
     -- Move Speed Settings
@@ -166,9 +170,9 @@ return {
 
     -- Gives Leyak a Big Speed Boost when greater than [leyak_stalking_distance] away from player.
     leyak_stalking_distance = 2500,
-    leyak_stalking_walk = 1000,
+    leyak_stalking_walk = 300,
     leyak_stalking_sprint = 300,
-    leyak_stalking_speed_factor = 7,
+    leyak_stalking_speed_factor = 3,  --7
 
     -- Slows the Leyak when invisible and less than than [leyak_invisible_distance] away from player.
     leyak_invisible_distance = 200,
@@ -267,7 +271,7 @@ return {
     -- ============================================================
     -- Debug Settings
     -- ============================================================
-    admin_messages_enabled = true,
+    admin_messages_enabled = false,
     log_distance_to_player = false,
 
 
