@@ -60,6 +60,7 @@ local LeyakStates = {
     DeSpawned = "DeSpawned",
 }
 local leyak_state = LeyakStates.Init
+local safety_zone_flag = {}
 
 -- ============================================================
 -- INSTANCES
@@ -124,6 +125,17 @@ local function LeyakSpeak(player_char)
     Utils.PlaySoundAtPlayer(snd_path, player_char, vol, pitch, wait)
 end
 
+--- Flag if the Player was recently in a Leyak Safety Zone (check buff)
+---@param player_name string
+---@return boolean
+local function PlayerWasInLeyakSafetyZone(player_name)
+    for k, v in pairs(safety_zone_flag) do
+        if k == player_name then
+            return safety_zone_flag[player_name]
+        end
+    end
+    return false
+end
 
 -- ============================================================
 -- FUNCTIONS
@@ -535,12 +547,19 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
         leyak_state = LeyakStates.Active
     end
 
-    -- Randomize Next Cooldown Time
-    local leyak_director = GetValidLeyakDir()
-    ConfigLeyak.leyak_cooldown = math.random(ConfigLeyak.leyak_cooldown_min, ConfigLeyak.leyak_cooldown_max)
-    leyak_director.LeyakCooldown = ConfigLeyak.leyak_cooldown
-    
+
+
     ExecuteWithDelay(5000, function()
+
+        -- Randomize Next Cooldown Time
+        local leyak_director = GetValidLeyakDir()
+        if not Utils.IsValid() then
+            Utils.error("[Handle_LeyakNotifyOnNewObject] Invalid Leyak AI Director")
+        else
+            ConfigLeyak.leyak_cooldown = math.random(ConfigLeyak.leyak_cooldown_min, ConfigLeyak.leyak_cooldown_max)
+            leyak_director.LeyakCooldown = ConfigLeyak.leyak_cooldown
+        end
+
         -- Record how far away the Leyak is from target
         local dist = CalcLeyakDistanceToPlayer()
         if ConfigLeyak.log_distance_to_player then
@@ -560,6 +579,17 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
 
         -- Record the Target Player Name
         leyak_target_name = leyak.TargetPlayer.MyPlayerState:GetPlayerName():ToString()
+
+        -- Prepare to Dismiss if Player was Recently Safe
+        -- If not already caught by the Buff-Extension
+        if PlayerWasInLeyakSafetyZone(leyak_target_name) then
+            local msg = string.format("Leyak tried to spawn, but %s was recently in a Safe Zone", leyak_target_name)
+            Utils.log(msg)
+            safety_zone_flag[leyak_target_name] = false
+            leyak_was_dismissed = true
+            leyak_teleport_attack = false
+            leyak_quick_scare = false
+        end
 
         -- New XRAY Duration from Min/Max Range
         ConfigLeyak.leyak_xray_dismissal_time = math.random(
@@ -1171,7 +1201,7 @@ local function Handle_OnRep_CurrentDay()
         local msg = string.format("[Leyak Containment Break Attempt] Roll = %.1f / %.1f", dice_roll*100, ConfigLeyak.leyak_random_containment_break_chance)
         Utils.AdminMessage(msg, MOD_PREFIX, Enums.MsgColors.blue, Enums.MsgColors.green)
     end
-    
+
     if (dice_roll*100) <= (ConfigLeyak.leyak_random_containment_break_chance) then
         local containment_instances = FindAllOf("Deployed_LeyakContainment_C")
         if containment_instances then
@@ -1288,15 +1318,115 @@ local function Handle_OnRep_LastKnownHour(context)
                 local player_state = Utils.GetRandomPlayerState()
                 if Utils.IsValid(player_state) then
                     local player_char = player_state.PawnPrivate ---@type AAbiotic_PlayerCharacter_C
+                    local player_name = player_state.PlayerNamePrivate:ToString()
                     if not Utils.doesPlayerHaveBuff(player_char, Enums.Buffs.Buff_LeyakSafetyZone) then
-                        -- Sounds only if Player is Not in a Safe Zone
-                        LeyakSpeak(player_char)
+                        -- Sounds only if Player is Not in a Safe Zone, and was not recently
+                        if not PlayerWasInLeyakSafetyZone(player_name) then
+                            LeyakSpeak(player_char)
+                        end
                     end
                 end
             end
         end
     end
 end
+
+-- Call on Buff Apply
+local function Handle_Server_ApplyBuff(Context, BuffRow, bOverrideDefaultDuration, NewDuration, Limb, LinkedActor, bSkipDialog)
+
+    local buff_row = BuffRow:get()
+    local actor = Context:get() -- AActor
+    local actor_owner = actor:GetOwner()
+
+    local world = Utils.GetWorld()
+    if Utils.IsValid(world) then
+        local gameState = world.GameState ---@type AGameStateBase
+        if Utils.IsValid(gameState) and gameState.PlayerArray then
+            for i = 1, #gameState.PlayerArray do
+                local playerState = gameState.PlayerArray[i] ---@cast playerState AAbiotic_PlayerState_C
+
+                if playerState:IsValid() and playerState.PawnPrivate:IsValid() and actor_owner ~= nil then
+                    local playerName = playerState.PlayerNamePrivate:ToString()
+                    if actor_owner:GetAddress() == playerState.PawnPrivate:GetAddress() then
+
+                        local buffRow = BuffRow:get() ---@type FBuffDebuffRowHandle
+                        local rowName = buffRow.RowName
+                        local buffRowName = rowName:ToString()
+                        player_controller = playerState:GetPlayerController()
+
+                        if #buffRowName > 5 and buffRowName == Enums.Buffs.Buff_LeyakSafetyZone then
+                            local msg = string.format("Player %s added to safety_zone_flag list", playerName)
+                            Utils.log(msg)
+                            safety_zone_flag[playerName] = true
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
+
+local function Handle_Server_RemoveBuff(Context, BuffRow, bRemoveEntireStack, Limb, bExpiredByTime)
+    local buff_row = BuffRow:get()
+    local actor = Context:get() -- AActor
+    local actor_owner = actor:GetOwner()
+
+    local world = Utils.GetWorld()
+    if Utils.IsValid(world) then
+        local gameState = world.GameState ---@type AGameStateBase
+        if Utils.IsValid(gameState) and gameState.PlayerArray then
+            for i = 1, #gameState.PlayerArray do
+                local playerState = gameState.PlayerArray[i] ---@cast playerState AAbiotic_PlayerState_C
+
+                if playerState:IsValid() and playerState.PawnPrivate:IsValid() and actor_owner ~= nil then
+                    local playerName = playerState.PlayerNamePrivate:ToString()
+                    if actor_owner:GetAddress() == playerState.PawnPrivate:GetAddress() then
+
+                        local buffRow = BuffRow:get() ---@type FBuffDebuffRowHandle
+                        local rowName = buffRow.RowName
+                        local buffRowName = rowName:ToString()
+                        player_controller = playerState:GetPlayerController()
+
+                        -- print("Handle_Server_RemoveBuff")
+                        -- print(buffRowName)
+                        -- print("bExpiredByTime")
+                        -- print(bExpiredByTime:get())
+
+                        if #buffRowName > 5 and buffRowName == Enums.Buffs.Buff_LeyakSafetyZone then
+                            local msg = string.format("Player %s had safe zone removed", playerName)
+                            Utils.log(msg)
+                            local timer_expired = bExpiredByTime:get()
+                            if timer_expired then
+                                -- Player's Temporary Protection Expired
+                                local msg = string.format("Player %s temporary safe zone protection expired", playerName)
+                                Utils.log(msg)
+                                safety_zone_flag[playerName] = false
+                            else
+                                -- Player Left the Safe Zone, Apply Additional Temp Coverage
+                                local msg = string.format("%s left a Leyak Safe Zone, and was granted temporary protection for %d seconds", playerName, ConfigLeyak.leyak_safe_zone_grace_period_seconds)
+                                Utils.log(msg)
+                                safety_zone_flag[playerName] = true
+                                --ExecuteWithDelay(1000, function()
+                                Utils.ApplyBuff(playerState.PawnPrivate, Enums.Buffs.Buff_LeyakSafetyZone, 100)
+
+                                
+                                ExecuteWithDelay(ConfigLeyak.leyak_safe_zone_grace_period_seconds*1000, function()
+                                    local msg = string.format("Preparing to remove temporary safe zone protection from %s", playerName)
+                                    local remove_all_stacks = true
+                                    local limb = 0
+                                    local time_expired = true
+                                    Utils.RemoveBuff(playerState.PawnPrivate, Enums.Buffs.Buff_LeyakSafetyZone, remove_all_stacks, limb, time_expired )
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end
+
 
 -- ============================================================
 -- HOOKS
@@ -1398,6 +1528,30 @@ local function SetupOnGameStateHooks()
             Utils.error(string.format("Hook registration failed: %s", tostring(errHook)))
         else
             Utils.log("Hook registration success: Handle_OnRep_LastKnownHour")
+        end
+    end)
+
+    ExecuteWithDelay(2500, function()
+        local okHook, errHook = pcall(RegisterHook,
+            "/Script/AbioticFactor.CharacterBuffComponent:Server_ApplyBuff",
+            Handle_Server_ApplyBuff
+        )
+        if not okHook then
+            Utils.error(string.format("Hook registration failed: %s", tostring(errHook)))
+        else
+            Utils.log("Hook registration success: Handle_Server_ApplyBuff")
+        end
+    end)
+
+    ExecuteWithDelay(2500, function()
+        local okHook, errHook = pcall(RegisterHook,
+            "/Script/AbioticFactor.CharacterBuffComponent:Server_RemoveBuff",
+            Handle_Server_RemoveBuff
+        )
+        if not okHook then
+            Utils.error(string.format("Hook registration failed: %s", tostring(errHook)))
+        else
+            Utils.log("Hook registration success: Handle_Server_RemoveBuff")
         end
     end)
 
@@ -1516,7 +1670,6 @@ if ToggleKey then
         ExecuteInGameThread(function()
             -- Test Stuff Here
             --Spawn_Leyak_Scare()
-
         end)
     end
 

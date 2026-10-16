@@ -29,7 +29,10 @@ return {
     -- in the Office Lobby. Set this back to "LABS_EnteredLabs" to restore the
     --  default start event to labs.
     leyak_world_flag_to_start_spawning_at = "Office_ReachedLobby",
-    
+
+    -- Time after exiting a safe zone/Portal World before re-enabling Leyak
+    leyak_safe_zone_grace_period_seconds = 90,
+
     -- Randomizes choice between new Leyak behavior modes
     -- Setting this true will randomly override the following:
     --  1. leyak_is_dismissed_by_looking
