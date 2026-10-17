@@ -60,7 +60,13 @@ local LeyakStates = {
     DeSpawned = "DeSpawned",
 }
 local leyak_state = LeyakStates.Init
-local safety_zone_flag = {}
+local SafetyZoneStates = {
+    NotSafe = "NotSafe",
+    Entered = "EnteredSafeZone",
+    Exited = "Exited",
+    ExitedBuffed = "ExitedSafeZoneTempSafeBuff",
+}
+local safety_zone_state = {}
 
 -- ============================================================
 -- INSTANCES
@@ -125,17 +131,30 @@ local function LeyakSpeak(player_char)
     Utils.PlaySoundAtPlayer(snd_path, player_char, vol, pitch, wait)
 end
 
---- Flag if the Player was recently in a Leyak Safety Zone (check buff)
+--- Flag if the Player was recently in a Leyak Safety Zone (Entered or recently exited)
 ---@param player_name string
 ---@return boolean
 local function PlayerWasInLeyakSafetyZone(player_name)
-    for k, v in pairs(safety_zone_flag) do
+    for k, v in pairs(safety_zone_state) do
         if k == player_name then
-            return safety_zone_flag[player_name]
+            return (safety_zone_state[player_name] == SafetyZoneStates.Entered) or (safety_zone_state[player_name] == SafetyZoneStates.Exited)
         end
     end
     return false
 end
+
+--- Flag if the Player is currently in a Leyak Safety Zone (SafetyZoneStates.Entered)
+---@param player_name string
+---@return boolean
+local function PlayerIsInLeyakSafetyZone(player_name)
+    for k, v in pairs(safety_zone_state) do
+        if k == player_name then
+            return (safety_zone_state[player_name] == SafetyZoneStates.Entered)
+        end
+    end
+    return false
+end
+
 
 -- ============================================================
 -- FUNCTIONS
@@ -585,7 +604,6 @@ local function Handle_LeyakNotifyOnNewObject(leyak)
         if PlayerWasInLeyakSafetyZone(leyak_target_name) then
             local msg = string.format("Leyak tried to spawn, but %s was recently in a Safe Zone", leyak_target_name)
             Utils.log(msg)
-            safety_zone_flag[leyak_target_name] = false
             leyak_was_dismissed = true
             leyak_teleport_attack = false
             leyak_quick_scare = false
@@ -1333,11 +1351,9 @@ end
 
 -- Call on Buff Apply
 local function Handle_Server_ApplyBuff(Context, BuffRow, bOverrideDefaultDuration, NewDuration, Limb, LinkedActor, bSkipDialog)
-
-    local buff_row = BuffRow:get()
     local actor = Context:get() -- AActor
     local actor_owner = actor:GetOwner()
-
+    local duration = NewDuration:get()
     local world = Utils.GetWorld()
     if Utils.IsValid(world) then
         local gameState = world.GameState ---@type AGameStateBase
@@ -1352,12 +1368,26 @@ local function Handle_Server_ApplyBuff(Context, BuffRow, bOverrideDefaultDuratio
                         local buffRow = BuffRow:get() ---@type FBuffDebuffRowHandle
                         local rowName = buffRow.RowName
                         local buffRowName = rowName:ToString()
-                        player_controller = playerState:GetPlayerController()
 
                         if #buffRowName > 5 and buffRowName == Enums.Buffs.Buff_LeyakSafetyZone then
-                            local msg = string.format("Player %s added to safety_zone_flag list", playerName)
+                            local msg = string.format("[Handle_Server_ApplyBuff]Player %s, Safe Zone State: %s", playerName, safety_zone_state[playerName])
                             Utils.log(msg)
-                            safety_zone_flag[playerName] = true
+                            if duration == 10 then
+                                -- Default Applied by Server, Always Mark as entered
+                                safety_zone_state[playerName] = SafetyZoneStates.Entered
+                            elseif safety_zone_state[playerName] == nil then
+                                -- Mark as entered
+                                safety_zone_state[playerName] = SafetyZoneStates.Entered
+                            elseif safety_zone_state[playerName] == SafetyZoneStates.NotSafe then
+                                -- Mark as entered
+                                safety_zone_state[playerName] = SafetyZoneStates.Entered
+                            elseif safety_zone_state[playerName] == SafetyZoneStates.Exited then
+                                -- Exited, Got Temporary Buff
+                                safety_zone_state[playerName] = SafetyZoneStates.ExitedBuffed
+                            else
+                                -- Else, mark as entered
+                                safety_zone_state[playerName] = SafetyZoneStates.Entered
+                            end
                         end
                     end
                 end
@@ -1386,37 +1416,38 @@ local function Handle_Server_RemoveBuff(Context, BuffRow, bRemoveEntireStack, Li
                         local buffRow = BuffRow:get() ---@type FBuffDebuffRowHandle
                         local rowName = buffRow.RowName
                         local buffRowName = rowName:ToString()
-                        player_controller = playerState:GetPlayerController()
-
-                        -- print("Handle_Server_RemoveBuff")
-                        -- print(buffRowName)
-                        -- print("bExpiredByTime")
-                        -- print(bExpiredByTime:get())
 
                         if #buffRowName > 5 and buffRowName == Enums.Buffs.Buff_LeyakSafetyZone then
+
+                            local msg = string.format("[Handle_Server_RemoveBuff]Player %s, Safe Zone State: %s", playerName, safety_zone_state[playerName])
+                            Utils.log(msg)
+
                             local msg = string.format("Player %s had safe zone removed", playerName)
                             Utils.log(msg)
                             local timer_expired = bExpiredByTime:get()
                             if timer_expired then
                                 -- Player's Temporary Protection Expired
+                                -- [TODO] Does this only work on single player because the blueprint expiration prop is local?
                                 local msg = string.format("Player %s temporary safe zone protection expired", playerName)
                                 Utils.log(msg)
-                                safety_zone_flag[playerName] = false
+                                safety_zone_state[playerName] = SafetyZoneStates.NotSafe
                             else
                                 -- Player Left the Safe Zone, Apply Additional Temp Coverage
                                 local msg = string.format("%s left a Leyak Safe Zone, and was granted temporary protection for %d seconds", playerName, ConfigLeyak.leyak_safe_zone_grace_period_seconds)
                                 Utils.log(msg)
-                                safety_zone_flag[playerName] = true
-                                --ExecuteWithDelay(1000, function()
+                                safety_zone_state[playerName] = SafetyZoneStates.Exited
                                 Utils.ApplyBuff(playerState.PawnPrivate, Enums.Buffs.Buff_LeyakSafetyZone, 100)
-
-                                
+                                -- Note: Buff_LeyakSafetyZone is blueprinted as bNoExpiration=true, so it normally ignores duration
                                 ExecuteWithDelay(ConfigLeyak.leyak_safe_zone_grace_period_seconds*1000, function()
-                                    local msg = string.format("Preparing to remove temporary safe zone protection from %s", playerName)
-                                    local remove_all_stacks = true
-                                    local limb = 0
-                                    local time_expired = true
-                                    Utils.RemoveBuff(playerState.PawnPrivate, Enums.Buffs.Buff_LeyakSafetyZone, remove_all_stacks, limb, time_expired )
+                                    -- Check to make sure player didn't since re-enter the safety zones
+                                    if safety_zone_state[playerName] == SafetyZoneStates.ExitedBuffed then
+                                        local msg = string.format("Preparing to remove temporary safe zone protection from %s", playerName)
+                                        Utils.log(msg)
+                                        local remove_all_stacks = true
+                                        local limb = 0
+                                        local time_expired = true
+                                        Utils.RemoveBuff(playerState.PawnPrivate, Enums.Buffs.Buff_LeyakSafetyZone, remove_all_stacks, limb, time_expired )
+                                    end
                                 end)
                             end
                         end
@@ -1670,6 +1701,14 @@ if ToggleKey then
         ExecuteInGameThread(function()
             -- Test Stuff Here
             --Spawn_Leyak_Scare()
+            print(safety_zone_state["playerName"])
+            if safety_zone_state["playerName"] == SafetyZoneStates.Entered then
+                
+                print("none existing key, what happens?")
+            end
+            if safety_zone_state["playerName"] == nil then
+                print("nil check")
+            end
         end)
     end
 
